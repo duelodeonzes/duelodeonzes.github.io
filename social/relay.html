@@ -1,0 +1,4 @@
+<!doctype html><meta charset="utf-8"><meta name="robots" content="noindex"><script>
+addEventListener('message',async e=>{const u=e.data&&e.data.get;if(!u||!/^[a-z0-9._-]+$/i.test(u))return;try{const r=await fetch(u+'?'+Date.now());const b=await r.blob();parent.postMessage({relay:u,blob:b,type:b.type},'*')}catch(err){parent.postMessage({relay:u,error:String(err)},'*')}});
+parent.postMessage({relayReady:1},'*');
+</script>
