@@ -117,7 +117,7 @@ const norm=s=>s.normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase();
 const COL=["var(--home)","var(--away)","#ffd166","#7fe0a8","#c792ea","#ff9f43","#5ad1e6","#f78fb3"];
 function el(t,c,x){const e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e}
 const SCREENS=["sStart","sLobby","sTour","sCoach","sDraft","sCap","sPre","sBracket","sMatch","sResult","sSeason","sMe","sQuick","sWelcome"];
-function show(id){const was=SCREENS.find(s=>!$(s).hidden);SCREENS.forEach(s=>$(s).hidden=s!==id);
+function show(id){const was=SCREENS.find(s=>!$(s).hidden);SCREENS.forEach(s=>$(s).hidden=s!==id);if(id==="sStart"&&typeof instRefresh==="function")instRefresh();
   if(id==="sStart"&&typeof drawHome==="function")drawHome();if(was!==id)window.scrollTo(0,0);document.documentElement.classList.add("lockmatch");if(FITS[id])requestAnimationFrame(fitStart)}
 const FITS={sLobby:["fA","fB","fC"],sTour:["fA","fB","fC"]};
 function fitStart(){for(const id in FITS){const s=document.getElementById(id);if(!s||s.hidden)continue;const F=FITS[id];s.classList.remove(...F);
@@ -2587,6 +2587,52 @@ function endShootout(){
   $("clock").textContent=`Penáltis ${P.g.join("–")}`;finish();
 }
 /* estatísticas anónimas: só contagens por dia (visitas e jogos por modo), sem nomes nem identificadores */
+/* ---- pôr o jogo no ecrã principal (instalar a app) ---- */
+const LE=(pt,en)=>LANG==="en"?en:pt;
+const INST={dp:window.__dp||null,ua:navigator.userAgent,site:location.protocol==="https:"&&/github\.io$/.test(location.hostname)};
+INST.standalone=()=>matchMedia("(display-mode: standalone)").matches||navigator.standalone===true;
+INST.inapp=/Instagram|FBAN|FBAV|FB_IAB|FBIOS|TikTok|musical_ly|Bytedance|Snapchat|Twitter|\bLine\//i.test(INST.ua);
+INST.app=/Instagram/i.test(INST.ua)?"Instagram":/TikTok|musical_ly|Bytedance/i.test(INST.ua)?"TikTok":/FBAN|FBAV|FB_IAB|FBIOS/i.test(INST.ua)?"Facebook":"";
+INST.ios=/iPhone|iPad|iPod/i.test(INST.ua)||(/Macintosh/.test(INST.ua)&&navigator.maxTouchPoints>1);
+INST.android=/Android/i.test(INST.ua);
+addEventListener("beforeinstallprompt",e=>{e.preventDefault();INST.dp=e;instRefresh()});
+addEventListener("appinstalled",()=>{INST.dp=null;store("duelo_inst",{done:1});try{statAdd("v_ins")}catch(e){}instRefresh()});
+function instCan(){return INST.site&&!INST.standalone()&&(INST.inapp||INST.ios||INST.android||!!INST.dp)}
+function instWant(){if(!instCan())return false;const s=store("duelo_inst")||{};if(s.done)return false;if(s.snooze&&Date.now()<s.snooze)return false;
+  return INST.inapp||(H().games||[]).length>0}
+function instRefresh(){if(!$("instBar"))return;$("meInstall").hidden=!instCan();$("instBar").hidden=!instWant();
+  $("instBarTx").textContent=INST.inapp?(INST.app?LE(`Estás a jogar dentro do ${INST.app}. Abre no navegador para guardar o jogo.`,`You're playing inside ${INST.app}. Open it in your browser to keep the game.`):LE("Abre no navegador para guardar o jogo no telemóvel.","Open it in your browser to keep the game on your phone.")):LE("Põe o jogo no ecrã principal: abre como uma app, em ecrã inteiro.","Add the game to your home screen: it opens like an app, full screen.");
+  $("instBarGo").textContent=INST.inapp?LE("Como?","How?"):LE("Instalar","Install");$("instBarNo").setAttribute("aria-label",LE("Agora não","Not now"))}
+const I_SHARE='<span class="ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 8l5-5 5 5"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg></span>';
+const I_ADD='<span class="ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><rect x="4" y="4" width="16" height="16" rx="4"/><path d="M12 8v8M8 12h8"/></svg></span>';
+const I_DOTS='<span class="ico">⋯</span>',I_VDOTS='<span class="ico">⋮</span>';
+function instSheet(){let h;const keep=LE("Abre em ecrã inteiro, sem barra de endereço, e lembra-se do teu nome e das tuas ligas.","It opens full screen, with no address bar, and remembers your name and your leagues.");
+  if(INST.inapp){const where=INST.app?LE(`Dentro do ${INST.app}`,`Inside ${INST.app}`):LE("Dentro desta app","Inside this app"),br=INST.ios?"Safari":"Chrome";
+    $("instTitle").textContent=LE("Abrir no navegador","Open in your browser");
+    h=`<p>${where} ${LE("não dá para guardar o jogo no ecrã. Abre-o no navegador do telemóvel:","you can't keep the game on your home screen. Open it in your phone's browser:")}</p><ol class="iSteps">
+      <li><span>${LE("Toca no menu","Tap the menu")} ${INST.ios?I_DOTS:I_VDOTS} ${LE("no canto de cima.","in the top corner.")}</span></li>
+      <li><span>${LE("Escolhe","Choose")} <b>${INST.ios?LE("Abrir no navegador externo","Open in external browser"):LE("Abrir no Chrome","Open in Chrome")}</b> ${LE("(ou","(or")} <b>${LE("Abrir no navegador","Open in browser")}</b>).</span></li>
+      <li><span>${LE("No navegador, carrega outra vez em","In the browser, tap")} <b>${LE("Instalar","Install")}</b> ${LE("para pôr o jogo no ecrã principal.","again to add the game to your home screen.")}</span></li></ol>
+      <p class="iNote">${LE(`Se não encontrares a opção, copia a ligação e cola-a no ${br}.`,`Can't find it? Copy the link and paste it into ${br}.`)}</p>
+      <div class="iBtns"><button type="button" class="btn" id="instCopy">${LE("Copiar ligação","Copy link")}</button></div>`}
+  else if(INST.ios){$("instTitle").textContent=LE("Pôr no ecrã principal","Add to home screen");const cr=/CriOS/.test(INST.ua),other=/CriOS|FxiOS|EdgiOS/.test(INST.ua);
+    h=`<p>${LE("No iPhone é em 3 toques","On iPhone it takes 3 taps")}${other?"":LE(" (no <b>Safari</b>)"," (in <b>Safari</b>)")}:</p><ol class="iSteps">
+      <li><span>${LE("Toca em","Tap")} <b>${LE("Partilhar","Share")}</b> ${I_SHARE} ${cr?LE("ao lado da barra de endereço.","next to the address bar."):LE("na barra de baixo (às vezes está dentro do","in the bottom bar (sometimes inside")+" "+I_DOTS+")."}</span></li>
+      <li><span>${LE("Desliza e escolhe","Scroll and choose")} <b>${LE("Adicionar ao ecrã principal","Add to Home Screen")}</b> ${I_ADD}.</span></li>
+      <li><span>${LE("Toca em","Tap")} <b>${LE("Adicionar","Add")}</b>. ${LE("O Duelo de Onzes fica com ícone, como uma app.","XI Duel gets an icon, like an app.")}</span></li></ol>
+      <p class="iNote">${keep}</p>`}
+  else{$("instTitle").textContent=LE("Pôr no ecrã principal","Add to home screen");
+    h=`<ol class="iSteps"><li><span>${LE("Toca no menu","Tap the browser menu")} ${I_VDOTS} ${LE("do navegador, no canto de cima.","in the top corner.")}</span></li>
+      <li><span>${LE("Escolhe","Choose")} <b>${LE("Instalar app","Install app")}</b> ${LE("ou","or")} <b>${LE("Adicionar ao ecrã principal","Add to Home screen")}</b>.</span></li>
+      <li><span>${LE("Confirma. O Duelo de Onzes fica com ícone, como uma app.","Confirm. XI Duel gets an icon, like an app.")}</span></li></ol>
+      <p class="iNote">${keep}</p>`}
+  $("instBody").innerHTML=h;
+  const c=$("instCopy");if(c)c.onclick=()=>{const u=location.origin+location.pathname;(navigator.clipboard?navigator.clipboard.writeText(u):Promise.reject()).then(()=>{c.textContent=LE("Ligação copiada ✓","Link copied ✓")}).catch(()=>{prompt(LE("Copia esta ligação:","Copy this link:"),u)})}}
+function instGo(){if(INST.dp&&!INST.inapp){const d=INST.dp;d.prompt();d.userChoice.then(c=>{INST.dp=null;if(c.outcome==="accepted")store("duelo_inst",{done:1});instRefresh()}).catch(()=>{});return}
+  instSheet();openSheet("shInstall")}
+$("instBarGo").onclick=instGo;$("meInstall").onclick=instGo;
+$("instBarNo").onclick=()=>{store("duelo_inst",{snooze:Date.now()+3*864e5});instRefresh()};
+setTimeout(instRefresh,0);
 const STAT_ON=location.protocol==="https:"&&location.hostname==="duelodeonzes.github.io";
 function statAdd(k){if(!STAT_ON||!/^(v|g)_[a-z]{1,3}$/.test(k))return;const d=new Date().toISOString().slice(0,10);
   fbLoad().then(({D,db})=>D.set(D.ref(db,`stats/d/${d}/${k}`),D.increment(1))).catch(()=>{})}

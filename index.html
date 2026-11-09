@@ -18,20 +18,12 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" type="image/png" href="icon-192.png">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<style>#instBtn{border-color:var(--gold)!important;color:var(--gold)!important}#instTip{position:fixed;left:16px;right:16px;bottom:max(16px,env(safe-area-inset-bottom));z-index:9999;background:#173a2a;border:1px solid #3b6b52;border-radius:16px;padding:16px;color:#eef6ef;font:16px/1.45 system-ui,sans-serif;box-shadow:0 10px 30px rgba(0,0,0,.5)}#instTip b{color:#ffd166}#instTip button{margin-top:10px;font:700 16px system-ui;padding:10px 18px;border-radius:10px;border:0;background:#ffd166;color:#14110a}</style>
+
 <script>(function(){
+window.addEventListener("beforeinstallprompt",function(e){e.preventDefault();window.__dp=e});
 if("serviceWorker" in navigator)window.addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){})});
-var dp=null,standalone=matchMedia("(display-mode: standalone)").matches||navigator.standalone;
-window.addEventListener("beforeinstallprompt",function(e){e.preventDefault();dp=e;show()});
-function tip(h){var o=document.getElementById("instTip");if(o)o.remove();var t=document.createElement("div");t.id="instTip";t.innerHTML=h+'<br><button>Percebi</button>';t.querySelector("button").onclick=function(){t.remove()};document.body.appendChild(t)}
-function show(){if(standalone)return;var row=document.querySelector("#sStart .minirow");if(!row||document.getElementById("instBtn"))return;
-  var b=document.createElement("button");b.className="minibtn";b.id="instBtn";b.textContent="Instalar app";row.prepend(b);
-  b.onclick=function(){if(dp){dp.prompt();dp.userChoice.then(function(){dp=null;b.remove()});return}
-    if(/iphone|ipad|ipod/i.test(navigator.userAgent))tip('No iPhone: abre no <b>Safari</b>, toca em <b>Partilhar</b> (o quadrado com a seta) e depois em <b>Adicionar ao ecrã principal</b>. O jogo fica com ícone e abre em ecrã inteiro.');
-    else tip('No menu do browser (⋮), escolhe <b>Instalar app</b> ou <b>Adicionar ao ecrã principal</b>.')}}
-document.addEventListener("DOMContentLoaded",show);
 })();</script>
-<link rel="preload" as="script" href="db-c2be7ea943.js"><link rel="preload" as="script" href="app-f46674218d.js">
+<link rel="preload" as="script" href="db-c2be7ea943.js"><link rel="preload" as="script" href="app-8712061201.js">
 <title>Duelo de Onzes</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="fonts.css">
@@ -486,6 +478,17 @@ html.lockmatch,html.lockmatch body{overflow:hidden;overscroll-behavior:none;heig
 .topBack{width:40px;height:40px;border-radius:50%;border:0;background:var(--card);color:var(--chalk);display:grid;place-items:center;cursor:pointer;flex:none}
 .avBtn{width:42px;height:42px;border-radius:50%;border:0;background:var(--home);color:#fff;font:800 1.05rem var(--body);cursor:pointer;flex:none}
 .avBig{width:58px;height:58px;border-radius:50%;background:var(--home);color:#fff;display:grid;place-items:center;font:800 1.5rem var(--body);flex:none}
+#sStart>*{flex-shrink:0}
+.instBar{position:relative;display:flex;align-items:center;gap:10px;padding-right:34px!important;border:1px solid var(--gold);border-radius:18px;padding:12px 14px;background:color-mix(in srgb,var(--gold) 10%,transparent);color:var(--chalk)}
+.instBar .ib{font-size:1.4rem}.instBar .it{flex:1;font:600 .92rem/1.35 var(--body)}
+.instBar .ig{border:0;border-radius:12px;padding:9px 16px;background:var(--gold);color:var(--onGold);font:800 .92rem var(--body);cursor:pointer}
+.instBar .ix{position:absolute;top:4px;right:4px;border:0;background:none;color:var(--muted);font:700 1rem var(--body);cursor:pointer;padding:6px 8px;line-height:1}
+.iSteps{list-style:none;margin:6px 0 0;padding:0;display:flex;flex-direction:column;gap:12px;counter-reset:st}
+.iSteps li{display:flex;gap:12px;align-items:flex-start;line-height:1.45;counter-increment:st}
+.iSteps li::before{content:counter(st);flex:none;width:30px;height:30px;border-radius:50%;background:var(--gold);color:var(--onGold);font:800 .95rem var(--body);display:flex;align-items:center;justify-content:center}
+.iSteps .ico{display:inline-flex;vertical-align:-5px;width:24px;height:24px;border:1px solid var(--lineC);border-radius:6px;align-items:center;justify-content:center;margin:0 2px;background:var(--turf2)}
+.iNote{margin-top:14px;font-size:.85rem;color:var(--muted)}
+.iBtns{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
 .contCard{display:flex;align-items:center;gap:12px;width:100%;text-align:left;border:1px solid var(--lineC);border-radius:22px;padding:12px 14px;color:var(--chalk);cursor:pointer;
   background:linear-gradient(135deg,#1e3a2a 0%,#141922 55%,#1b2740 100%)}
 .contCard .ct{flex:1;min-width:0}.contCard b{display:block;font:700 .98rem var(--body)}.contCard small{color:var(--muted);font-size:.82rem}
@@ -581,6 +584,7 @@ input[type=text],input[type=search]{background:var(--card);border-color:var(--li
   <div class="screen" id="sStart">
     <div class="hero2"><svg class="pitchbg" viewBox="0 0 400 260" aria-hidden="true" fill="none" stroke="rgba(238,246,239,.25)" stroke-width="2"><path d="M20 250 L60 30 H340 L380 250 Z"/><path d="M118 30 L112 70 H288 L282 30"/><path d="M200 250 A60 40 0 0 1 200 170"/></svg>
       <span class="kick2">Futebol entre amigos</span><div class="logo2">Duelo de<em>Onzes</em></div></div>
+    <div class="instBar" id="instBar" hidden><span class="ib">📲</span><span class="it" id="instBarTx" data-noi18n></span><button type="button" class="ig" id="instBarGo" data-noi18n>Instalar</button><button type="button" class="ix" id="instBarNo" aria-label="Agora não">✕</button></div>
     <button class="contCard" id="resumeBtn" type="button" hidden><span class="crest" id="contCrest"></span><span class="ct"><b id="resumeTxt">Continuar o jogo</b><small>Jogo online a meio</small></span><span class="go">Voltar</span></button>
     <div class="grid4">
       <button class="big" id="cardQuick" type="button"><span class="ic"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2L4 14h7l-1 8 9-12h-7z"/></svg></span><span><b>Jogo rápido</b><small>Amigo ou bot, aqui</small></span></button>
@@ -589,7 +593,7 @@ input[type=text],input[type=search]{background:var(--card);border-color:var(--li
       <button class="big lgc" id="cardLiga" type="button"><span class="ic"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 20h18M5 20V9l7-5 7 5v11"/><path d="M9 20v-6h6v6"/></svg></span><span><b>Liga</b><small id="cardLigaTx">Épocas com draft e mercado</small></span></button>
     </div>
     <div class="mini2"><button type="button" id="goMe">Perfil e definições</button><span>·</span><button type="button" data-sheet="shHow">Como jogar</button><span>·</span><button type="button" id="langBtn" data-noi18n>🌐 English</button></div>
-    <p class="ver" id="verTag">versão 09/11 · 15h30</p><p class="ver">Dados: Wikidata e Wikipédia (CC BY-SA)</p><p class="ver"><a href="privacidade.html" style="color:inherit">Privacidade</a> · <a href="termos.html" style="color:inherit">Termos</a></p>
+    <p class="ver" id="verTag">versão 09/11 · 19h00</p><p class="ver">Dados: Wikidata e Wikipédia (CC BY-SA)</p><p class="ver"><a href="privacidade.html" style="color:inherit">Privacidade</a> · <a href="termos.html" style="color:inherit">Termos</a></p>
     <div hidden><button id="goStart"></button><button id="botBtn"></button><button id="onlineBtn"></button><button id="tourBtn"></button><button id="lgBtn"></button><button id="histBtn"></button><button id="hiAv"></button><span id="hiName"></span></div>
   </div>
   <div class="screen" id="sWelcome" hidden>
@@ -846,6 +850,10 @@ input[type=text],input[type=search]{background:var(--card);border-color:var(--li
     <label class="toggle" for="showR"><span>Mostrar a qualidade dos jogadores durante a escolha</span><input type="checkbox" id="showR"></label>
     <div class="panel" id="repLocal" hidden style="display:flex;flex-direction:column;gap:8px"><span class="lbl">Erros reportados neste telemóvel</span><span class="muted" id="repLocalN"></span><button class="btn ghost" id="repCopy">Copiar para enviar ao Diogo</button><span class="msg ok" id="repCopyMsg"></span></div>
   </div></div>
+  <div class="sheet" id="shInstall" hidden><div class="sheetIn">
+    <div class="shHead"><h2 id="instTitle" data-noi18n>Pôr no ecrã principal</h2><button class="xbtn" data-close aria-label="Fechar">✕</button></div>
+    <div id="instBody" data-noi18n></div>
+  </div></div>
   <div class="sheet" id="shChem" hidden><div class="sheetIn">
     <div class="shHead"><h2>Química</h2><button class="xbtn" data-close aria-label="Fechar">✕</button></div>
     <p>Cada jogador do teu onze ganha pontos de química, até <b>3</b>:</p>
@@ -900,6 +908,6 @@ input[type=text],input[type=search]{background:var(--card);border-color:var(--li
 <canvas id="fx" hidden style="position:fixed;inset:0;pointer-events:none;z-index:50;width:100%;height:100%"></canvas>
 
 <script src="db-c2be7ea943.js"></script>
-<script src="app-f46674218d.js"></script>
+<script src="app-8712061201.js"></script>
 
 </html>
