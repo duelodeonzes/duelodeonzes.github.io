@@ -410,7 +410,7 @@ function drawDraft(){
   else drawPitch($("dPitch"),t,act?{onTap:selectSlot}:{});
   $("askPage").hidden=viewing||!act||G.sel==null;$("dHint").hidden=viewing||!act||G.sel!=null;$("dAsk").hidden=false;
   const tp=teamPower(t),ds=$("dStr");ds.innerHTML="";
-  if(tp){ds.append(el("span",null,`Força ${tp.avg.toFixed(1)}`),el("span","dsep","·"),(()=>{const b=el("button","chemBtn");b.type="button";
+  if(tp){ds.append((()=>{const b=el("button","chemBtn");b.type="button";
     const bar=el("span","chemBar");const f=el("i");f.style.width=Math.round(tp.chemPct*100)+"%";bar.append(f);
     b.append(el("span",null,"Química "),bar,el("b",null,`${Math.round(tp.chemSum)}/33`),el("span","chemQ","?"));b.onclick=()=>openSheet("shChem");return b})(),el("span","dsep","·"),el("span",null,`${G.teams[t].picks.length}/11`))}
   const others=[...Array(G.n).keys()].filter(x=>x!==mine);
@@ -2765,7 +2765,7 @@ function onzeImage(t){
   const [c,x]=shCanvas(),T=G.teams[t],S=strength(T);
   shText(x,G.names[t],60,110,{f:FD,s:84,w:900,c:colHex(t),max:960});
   shText(x,`${T.coach?T.coach.n:""} · ${T.form}`,60,165,{s:40,w:700,c:"#cfe0d4",max:960});
-  shText(x,`Força ${S.ovr.toFixed(1)}   ·   Química ${S.chemSum}/33`+(G.theme&&THEMES[G.theme]?`   ·   ${THEMES[G.theme].n.replace(/ \(.*\)$/,"")}`:""),60,215,{s:36,w:700,c:"#ffd166",max:960});
+  shText(x,`Química ${S.chemSum}/33`+(G.theme&&THEMES[G.theme]?`   ·   ${THEMES[G.theme].n.replace(/ \(.*\)$/,"")}`:""),60,215,{s:36,w:700,c:"#ffd166",max:960});
   shPitch(x,T,t,60,250,SHW-120,880);
   const bench=T.slots.filter(s=>s.pos==="SUP"&&s.pl).map(s=>s.pl.youth?"Júnior":dn(s.pl.n));
   shText(x,"Banco: "+(bench.join(" · ")||"—"),60,1190,{s:34,w:700,c:"#cfe0d4",max:960});
@@ -3077,7 +3077,7 @@ function seaDrawSquad(body,me,edit){
   names.forEach(n=>{const b=el("button","chip",n);b.type="button";b.setAttribute("aria-pressed",n===who);b.onclick=()=>{SEA.showSq=n;drawSeason()};pick.append(b)});body.append(pick);
   const sq=SEA.sq[seaK(who)];if(!sq){body.append(el("p","muted","Plantel ainda não gravado."));return}
   const T=seaTeam(sq,[]),S=strength(T),su=seaSusp(who,"");
-  body.append(el("p","muted",`${T.coach.n} · ${T.form} · Força ${S.ovr.toFixed(1)} · Química ${S.chemSum}/33`+(su.length?` · 🟥 suspenso no próximo jogo: ${su.map(lastName).join(", ")}`:"")));
+  body.append(el("p","muted",`${T.coach.n} · ${T.form} · Química ${S.chemSum}/33`+(su.length?` · 🟥 suspenso no próximo jogo: ${su.map(lastName).join(", ")}`:"")));
   T.slots.forEach((x,i)=>{const p=x.pl;const row=el("div","seaPl");row.append(el("span","pos",x.label),el("span","n",(p?p.youth?"Júnior da formação":dn(p.n):"—")+(p&&p===T.cap?" (C)":"")),el("span","r",p?String(p.youth?64:p.r):""));body.append(row)});
   if(edit&&who===me){const c=el("div","panel");c.style.cssText="display:flex;flex-direction:column;gap:8px;margin-top:8px";
     c.append(el("span","lbl","Capitão"));const cc=el("div","chips");T.slots.forEach((x,i)=>{if(x.pos==="SUP"||!x.pl||x.pl.youth)return;const b=el("button","chip",lastName(x.pl.n));b.type="button";b.setAttribute("aria-pressed",x.pl===T.cap);
