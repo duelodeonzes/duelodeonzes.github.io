@@ -2636,7 +2636,14 @@ setTimeout(instRefresh,0);
 const STAT_ON=location.protocol==="https:"&&location.hostname==="duelodeonzes.github.io";
 function statAdd(k){if(!STAT_ON||!/^(v|g)_[a-z]{1,3}$/.test(k))return;const d=new Date().toISOString().slice(0,10);
   fbLoad().then(({D,db})=>D.set(D.ref(db,`stats/d/${d}/${k}`),D.increment(1))).catch(()=>{})}
-setTimeout(()=>{try{const d=new Date().toISOString().slice(0,10);if(store("duelo_statday")!==d){store("duelo_statday",d);statAdd("v_"+LANG)}}catch(e){}},4000);
+/* telemóveis diferentes, sem identificar ninguém: cada aparelho soma 1 no dia em que aparece pela primeira vez (v_new; os que já cá estavam antes desta contagem somam v_old uma vez),
+   1 na primeira visita de cada semana (v_wk) e de cada mês (v_mo). Só ficam totais por dia. */
+setTimeout(()=>{try{if(!STAT_ON)return;const now=new Date(),d=now.toISOString().slice(0,10);
+  const first=store("duelo_seen");if(!first){store("duelo_seen",d);statAdd(store("duelo_statday")||store("duelo_names")?"v_old":"v_new")}
+  if(store("duelo_statday")!==d){store("duelo_statday",d);statAdd("v_"+LANG)}
+  const t=new Date(Date.UTC(now.getUTCFullYear(),now.getUTCMonth(),now.getUTCDate()));const dn=(t.getUTCDay()+6)%7;t.setUTCDate(t.getUTCDate()-dn);const wk=t.toISOString().slice(0,10);
+  if(store("duelo_statwk")!==wk){store("duelo_statwk",wk);statAdd("v_wk")}
+  const mo=d.slice(0,7);if(store("duelo_statmo")!==mo){store("duelo_statmo",mo);statAdd("v_mo")}}catch(e){}},4000);
 function statGame(){try{
   if(!G||(G.online&&G.online.watch))return;
   if(G.mode==="online"&&G.me!==0)return;   /* online conta uma vez por jogo (quem criou a sala) */

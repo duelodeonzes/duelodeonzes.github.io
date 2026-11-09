@@ -43,7 +43,7 @@ th{color:var(--mute);font-weight:600;font-size:13px}
   <div class="card"><h2>Jogos por dia</h2><div id="chG"></div><div class="legend" id="lgG"></div></div>
   <div class="card"><h2>Visitas por dia</h2><div id="chV"></div><div class="legend"><span><i style="background:var(--acc)"></i>Português</span><span><i style="background:var(--c-l)"></i>English</span></div></div>
   <div class="card"><h2>Por modo de jogo</h2><table id="tb"></table></div>
-  <p class="sub">Contagens anónimas por dia: cada telemóvel conta no máximo uma visita por dia; os jogos online contam uma vez por jogo. Não se guardam nomes nem identificadores.</p>
+  <p class="sub">Contagens anónimas por dia: cada telemóvel conta no máximo uma visita por dia; os jogos online contam uma vez por jogo. Não se guardam nomes nem identificadores. Os telemóveis diferentes contam-se desde 10/11/2026: cada aparelho soma 1 quando aparece pela primeira vez, e 1 na primeira visita de cada semana e de cada mês.</p>
 </main>
 <script type="module">
 const V="13.1.0",u=m=>`https://www.gstatic.com/firebasejs/${V}/firebase-${m}.js`;
@@ -64,7 +64,10 @@ function draw(){
   const ds=days(DAYS),by=Object.fromEntries(ROWS.map(r=>[r.day,r]));const data=ds.map(d=>({day:d,...(by[d]||{})}));
   const sum=(k,arr)=>arr.reduce((s,r)=>s+(r[k]||0),0),games=r=>MODES.reduce((s,[k])=>s+(r[k]||0),0);
   const today=data.at(-1),last7=data.slice(-7);
-  const T=[["Visitas hoje",(today.v_pt||0)+(today.v_en||0)],["Jogos hoje",games(today)],[`Visitas (${DAYS} dias)`,sum("v_pt",data)+sum("v_en",data)],[`Jogos (${DAYS} dias)`,data.reduce((s,r)=>s+games(r),0)],["Jogos simulados",sum("g_sim",data)],["Visitas em inglês",sum("v_en",data)]];
+  const all=ROWS,sumAll=k=>all.reduce((s,r)=>s+(r[k]||0),0);
+  const now=new Date(),t=new Date(Date.UTC(now.getUTCFullYear(),now.getUTCMonth(),now.getUTCDate()));t.setUTCDate(t.getUTCDate()-((t.getUTCDay()+6)%7));const wk=t.toISOString().slice(0,10),mo=now.toISOString().slice(0,7);
+  const devTot=sumAll("v_new")+sumAll("v_old"),devWk=all.filter(r=>r.day>=wk).reduce((s,r)=>s+(r.v_wk||0),0),devMo=all.filter(r=>r.day.startsWith(mo)).reduce((s,r)=>s+(r.v_mo||0),0);
+  const T=[["Telemóveis diferentes (total)",devTot],["Telemóveis esta semana",devWk],["Telemóveis este mês",devMo],[`Novos (${DAYS} dias)`,sum("v_new",data)],["Visitas hoje",(today.v_pt||0)+(today.v_en||0)],["Jogos hoje",games(today)],[`Visitas (${DAYS} dias)`,sum("v_pt",data)+sum("v_en",data)],[`Jogos (${DAYS} dias)`,data.reduce((s,r)=>s+games(r),0)],["Jogos simulados",sum("g_sim",data)],["Visitas em inglês",sum("v_en",data)],["Instalações (Android)",sum("v_ins",data)]];
   $("tiles").innerHTML=T.map(([k,v])=>`<div class="tile"><div class="k">${k}</div><div class="v">${fmt(v)}</div></div>`).join("");
   bars($("chG"),data,MODES);bars($("chV"),data,[["v_pt","","var(--acc)"],["v_en","","var(--c-l)"]],120);
   $("lgG").innerHTML=MODES.map(([,n,c])=>`<span><i style="background:${c}"></i>${n}</span>`).join("");
