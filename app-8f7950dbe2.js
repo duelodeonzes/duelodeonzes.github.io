@@ -2615,11 +2615,11 @@ function instSheet(){let h;const keep=LE("Abre em ecrã inteiro, sem barra de en
       <li><span>${LE("No navegador, carrega outra vez em","In the browser, tap")} <b>${LE("Instalar","Install")}</b> ${LE("para pôr o jogo no ecrã principal.","again to add the game to your home screen.")}</span></li></ol>
       <p class="iNote">${LE(`Se não encontrares a opção, copia a ligação e cola-a no ${br}.`,`Can't find it? Copy the link and paste it into ${br}.`)}</p>
       <div class="iBtns"><button type="button" class="btn" id="instCopy">${LE("Copiar ligação","Copy link")}</button></div>`}
-  else if(INST.ios){$("instTitle").textContent=LE("Pôr no ecrã principal","Add to home screen");const cr=/CriOS/.test(INST.ua),other=/CriOS|FxiOS|EdgiOS/.test(INST.ua);
-    h=`<p>${LE("No iPhone é em 3 toques","On iPhone it takes 3 taps")}${other?"":LE(" (no <b>Safari</b>)"," (in <b>Safari</b>)")}:</p><ol class="iSteps">
-      <li><span>${LE("Toca em","Tap")} <b>${LE("Partilhar","Share")}</b> ${I_SHARE} ${cr?LE("ao lado da barra de endereço.","next to the address bar."):LE("na barra de baixo (às vezes está dentro do","in the bottom bar (sometimes inside")+" "+I_DOTS+")."}</span></li>
+  else if(INST.ios){$("instTitle").textContent=LE("Pôr no ecrã principal","Add to home screen");const other=/CriOS|FxiOS|EdgiOS/.test(INST.ua);
+    h=`<p>${LE("No iPhone","On iPhone")}${other?"":LE(" (no <b>Safari</b>)"," (in <b>Safari</b>)")}:</p><ol class="iSteps">
+      <li><span>${LE("Toca nos","Tap the")} ${I_DOTS} ${LE("ao lado do endereço e depois em","next to the address, then")} <b>${LE("Partilhar","Share")}</b> ${I_SHARE}.<br><small class="muted">${LE("Em iPhones mais antigos, o botão Partilhar está logo na barra de baixo.","On older iPhones, the Share button is right in the bottom bar.")}</small></span></li>
       <li><span>${LE("Desliza e escolhe","Scroll and choose")} <b>${LE("Adicionar ao ecrã principal","Add to Home Screen")}</b> ${I_ADD}.</span></li>
-      <li><span>${LE("Toca em","Tap")} <b>${LE("Adicionar","Add")}</b>. ${LE("O Duelo de Onzes fica com ícone, como uma app.","XI Duel gets an icon, like an app.")}</span></li></ol>
+      <li><span>${LE("Deixa","Keep")} <b>${LE("Abrir como app Web","Open as Web App")}</b> ${LE("ligado e toca em","on and tap")} <b>${LE("Adicionar","Add")}</b>.</span></li></ol>
       <p class="iNote">${keep}</p>`}
   else{$("instTitle").textContent=LE("Pôr no ecrã principal","Add to home screen");
     h=`<ol class="iSteps"><li><span>${LE("Toca no menu","Tap the browser menu")} ${I_VDOTS} ${LE("do navegador, no canto de cima.","in the top corner.")}</span></li>
