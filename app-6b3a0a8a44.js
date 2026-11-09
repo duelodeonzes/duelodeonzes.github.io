@@ -2245,7 +2245,7 @@ function startMatch(o){
   $("bS").textContent="0–0";$("clock").textContent="0'";$("feed").innerHTML="";$("skip").hidden=false;$("toResult").hidden=true;$("momBox").hidden=true;
   show("sMatch");whistle(1);SC.skip=false;requestAnimationFrame(tvIdle);
   addLine({m:0,info:true,tx:`Começa o jogo! ${st.T[0].coach.n} contra ${st.T[1].coach.n}.`});
-  {const sh=st.planShare;if(sh&&sh[0]!==sh[1]){const f=sh[0]>sh[1]?0:1;const df=Math.abs(st.S[0].ovr-st.S[1].ovr);addLine({m:0,info:true,tx:df<.05?`Forças iguais (${st.S[f].ovr.toFixed(1)}): ${st.N[f]} tem mais química e fica com mais lances de ataque (${sh[f]} contra ${sh[1-f]}).`:`${st.N[f]} tem a equipa mais forte (${st.S[f].ovr.toFixed(1)} contra ${st.S[1-f].ovr.toFixed(1)}): vai ter mais lances de ataque (${sh[f]} contra ${sh[1-f]}).`})}}
+  /* a repartição dos lances (quem é mais forte) não é anunciada: descobre-se a jogar */
   proceed();
 }
 function startDuelMatch(){G.shownM=G.m;startMatch({a:0,b:1,key:G.seed+":m"+G.m,dk:G.mode==="online"?"m"+G.m:null,mySide:G.mode==="online"?G.me:null,noPens:!!G.fixed,onDone:recordDuel})}
@@ -2580,10 +2580,20 @@ function endShootout(){
   while(LIVE.i<st.ev.length){addLine(st.ev[LIVE.i]);LIVE.i++}
   $("clock").textContent=`Penáltis ${P.g.join("–")}`;finish();
 }
+/* estatísticas anónimas: só contagens por dia (visitas e jogos por modo), sem nomes nem identificadores */
+const STAT_ON=location.protocol==="https:"&&location.hostname==="duelodeonzes.github.io";
+function statAdd(k){if(!STAT_ON||!/^(v|g)_[a-z]{1,3}$/.test(k))return;const d=new Date().toISOString().slice(0,10);
+  fbLoad().then(({D,db})=>D.set(D.ref(db,`stats/d/${d}/${k}`),D.increment(1))).catch(()=>{})}
+setTimeout(()=>{try{const d=new Date().toISOString().slice(0,10);if(store("duelo_statday")!==d){store("duelo_statday",d);statAdd("v_"+LANG)}}catch(e){}},4000);
+function statGame(){try{
+  if(!G||(G.online&&G.online.watch))return;
+  if(G.mode==="online"&&G.me!==0)return;   /* online conta uma vez por jogo (quem criou a sala) */
+  const k=G.fixed?"g_s":G.mode==="tour"||(G.mode==="online"&&G.n>2)?"g_t":G.mode==="online"?"g_o":Object.keys(G.bots||{}).length?"g_b":"g_l";
+  statAdd(k);if(LIVE&&LIVE.sim)statAdd("g_sim")}catch(e){}}
 function finish(){
   stopFeed();LIVE.done=true;$("skip").hidden=true;$("momBox").hidden=true;$("toResult").hidden=!!(G&&G.online&&G.online.watch);if(!LIVE.st.pens)$("clock").textContent="Final";
   whistle(3);
-  if(!LIVE.recorded){LIVE.recorded=true;LIVE.onDone&&LIVE.onDone(LIVE.st)}
+  if(!LIVE.recorded){LIVE.recorded=true;statGame();LIVE.onDone&&LIVE.onDone(LIVE.st)}
 }
 
 /* ---- análise ---- */

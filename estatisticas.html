@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="pt">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#0d2419">
+<title>Estatísticas · Duelo de Onzes</title>
+<link rel="stylesheet" href="fonts.css">
+<style>
+:root{--bg:#0d2419;--panel:#122f22;--ink:#eef6ef;--mute:#a9c2b2;--line:#25503b;--acc:#c6ff3d;
+  --c-b:#c6ff3d;--c-l:#5ad1e6;--c-o:#ffd166;--c-t:#f78fb3;--c-s:#c792ea;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 Inter,system-ui,sans-serif}
+main{max-width:980px;margin:0 auto;padding:22px max(16px,env(safe-area-inset-left)) 48px max(16px,env(safe-area-inset-right));display:flex;flex-direction:column;gap:18px}
+h1{font:800 30px/1.1 "Barlow Condensed",Inter,sans-serif;margin:0}
+h2{font:700 19px/1.2 "Barlow Condensed",Inter,sans-serif;margin:0 0 10px;color:var(--acc)}
+.sub{color:var(--mute);margin:4px 0 0}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.tile{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.tile .k{color:var(--mute);font-size:13px}
+.tile .v{font:800 30px/1.1 "Barlow Condensed",Inter,sans-serif;font-variant-numeric:tabular-nums}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;min-width:0}
+.legend{display:flex;flex-wrap:wrap;gap:12px;font-size:13px;color:var(--mute);margin-top:8px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:middle}
+svg text{fill:var(--mute);font:11px Inter,system-ui,sans-serif}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
+th,td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left}
+td.n,th.n{text-align:right}
+th{color:var(--mute);font-weight:600;font-size:13px}
+.err{color:#ff8f7a}
+.range{display:flex;gap:6px}
+.range button{font:600 13px Inter,sans-serif;background:var(--panel);color:var(--mute);border:1px solid var(--line);border-radius:8px;padding:6px 10px;cursor:pointer}
+.range button[aria-pressed="true"]{background:var(--acc);color:var(--bg);border-color:var(--acc)}
+.top{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap}
+</style>
+</head>
+<body>
+<main>
+  <div class="top"><div><h1>Estatísticas do Duelo de Onzes</h1><p class="sub" id="sub">A carregar…</p></div>
+  <div class="range" id="range"><button data-d="7">7 dias</button><button data-d="30" aria-pressed="true">30 dias</button><button data-d="90">90 dias</button></div></div>
+  <div class="tiles" id="tiles"></div>
+  <div class="card"><h2>Jogos por dia</h2><div id="chG"></div><div class="legend" id="lgG"></div></div>
+  <div class="card"><h2>Visitas por dia</h2><div id="chV"></div><div class="legend"><span><i style="background:var(--acc)"></i>Português</span><span><i style="background:var(--c-l)"></i>English</span></div></div>
+  <div class="card"><h2>Por modo de jogo</h2><table id="tb"></table></div>
+  <p class="sub">Contagens anónimas por dia: cada telemóvel conta no máximo uma visita por dia; os jogos online contam uma vez por jogo. Não se guardam nomes nem identificadores.</p>
+</main>
+<script type="module">
+const V="13.1.0",u=m=>`https://www.gstatic.com/firebasejs/${V}/firebase-${m}.js`;
+const CFG={apiKey:"AIzaSyDr-c2mQUPcN2mhwtA8RUtHAbZMx7IOP7Q",authDomain:"duelo-de-onzes.firebaseapp.com",databaseURL:"https://duelo-de-onzes-default-rtdb.europe-west1.firebasedatabase.app",projectId:"duelo-de-onzes",appId:"1:353061850428:web:21de8abe41bddca8fda239"};
+const MODES=[["g_b","Contra o bot","var(--c-b)"],["g_l","Mesmo telemóvel","var(--c-l)"],["g_o","Online","var(--c-o)"],["g_t","Torneio","var(--c-t)"],["g_s","Liga","var(--c-s)"]];
+const $=id=>document.getElementById(id);let ROWS=[],DAYS=30;
+const fmt=n=>Number(n||0).toLocaleString("pt-PT");
+function days(n){const out=[];const d=new Date();for(let i=n-1;i>=0;i--){const x=new Date(d);x.setUTCDate(d.getUTCDate()-i);out.push(x.toISOString().slice(0,10))}return out}
+function bars(el,data,series,h=170){
+  const W=Math.max(320,el.clientWidth||600),pad=28,bw=(W-pad-6)/data.length;
+  const tot=data.map(r=>series.reduce((s,[k])=>s+(r[k]||0),0)),mx=Math.max(1,...tot);
+  let svg=`<svg viewBox="0 0 ${W} ${h+22}" width="100%" height="${h+22}" role="img">`;
+  [0,.5,1].forEach(f=>{const y=h-f*h+4;svg+=`<line x1="${pad}" x2="${W}" y1="${y}" y2="${y}" stroke="var(--line)"/><text x="${pad-4}" y="${y+4}" text-anchor="end">${Math.round(mx*f)}</text>`});
+  data.forEach((r,i)=>{let y=h+4;const x=pad+i*bw+1;series.forEach(([k,,c])=>{const v=r[k]||0;if(!v)return;const bh=v/mx*h;y-=bh;svg+=`<rect x="${x}" y="${y}" width="${Math.max(1,bw-2)}" height="${bh}" fill="${c}"><title>${r.day} · ${v}</title></rect>`});
+    if(data.length<=31&&(i%Math.ceil(data.length/8)===0||i===data.length-1))svg+=`<text x="${x+bw/2}" y="${h+18}" text-anchor="middle">${r.day.slice(8,10)}/${r.day.slice(5,7)}</text>`});
+  el.innerHTML=svg+"</svg>"}
+function draw(){
+  const ds=days(DAYS),by=Object.fromEntries(ROWS.map(r=>[r.day,r]));const data=ds.map(d=>({day:d,...(by[d]||{})}));
+  const sum=(k,arr)=>arr.reduce((s,r)=>s+(r[k]||0),0),games=r=>MODES.reduce((s,[k])=>s+(r[k]||0),0);
+  const today=data.at(-1),last7=data.slice(-7);
+  const T=[["Visitas hoje",(today.v_pt||0)+(today.v_en||0)],["Jogos hoje",games(today)],[`Visitas (${DAYS} dias)`,sum("v_pt",data)+sum("v_en",data)],[`Jogos (${DAYS} dias)`,data.reduce((s,r)=>s+games(r),0)],["Jogos simulados",sum("g_sim",data)],["Visitas em inglês",sum("v_en",data)]];
+  $("tiles").innerHTML=T.map(([k,v])=>`<div class="tile"><div class="k">${k}</div><div class="v">${fmt(v)}</div></div>`).join("");
+  bars($("chG"),data,MODES);bars($("chV"),data,[["v_pt","","var(--acc)"],["v_en","","var(--c-l)"]],120);
+  $("lgG").innerHTML=MODES.map(([,n,c])=>`<span><i style="background:${c}"></i>${n}</span>`).join("");
+  const tg=data.reduce((s,r)=>s+games(r),0)||1;
+  $("tb").innerHTML=`<tr><th>Modo</th><th class="n">Jogos</th><th class="n">%</th><th class="n">Últimos 7 dias</th></tr>`+MODES.map(([k,n])=>`<tr><td>${n}</td><td class="n">${fmt(sum(k,data))}</td><td class="n">${Math.round(sum(k,data)/tg*100)}%</td><td class="n">${fmt(sum(k,last7))}</td></tr>`).join("");
+  $("sub").textContent=`Últimos ${DAYS} dias · atualizado às ${new Date().toLocaleTimeString("pt-PT",{hour:"2-digit",minute:"2-digit"})}`}
+document.querySelectorAll("#range button").forEach(b=>b.onclick=()=>{DAYS=+b.dataset.d;document.querySelectorAll("#range button").forEach(x=>x.setAttribute("aria-pressed",x===b));draw()});
+try{
+  const [A,AU,D,AC]=await Promise.all([import(u("app")),import(u("auth")),import(u("database")),import(u("app-check"))]);
+  const app=A.initializeApp(CFG);AC.initializeAppCheck(app,{provider:new AC.ReCaptchaEnterpriseProvider("6Ldl5xMuAAAAAEPrlKy2St3ovDWFfj-rbRJyj6Xb"),isTokenAutoRefreshEnabled:true});
+  const auth=AU.getAuth(app);await AU.signInAnonymously(auth);const db=D.getDatabase(app);
+  D.onValue(D.query(D.ref(db,"stats/d"),D.orderByKey(),D.limitToLast(120)),snap=>{ROWS=[];snap.forEach(c=>{ROWS.push({day:c.key,...c.val()})});draw()},e=>{$("sub").innerHTML=`<span class="err">Não foi possível ler as estatísticas (${e.code||e.message}).</span>`});
+}catch(e){$("sub").innerHTML=`<span class="err">Não foi possível ligar (${e.code||e.message}).</span>`}
+addEventListener("resize",()=>{if(ROWS)draw()});
+</script>
+</body>
+</html>
