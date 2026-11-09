@@ -1,0 +1,902 @@
+<!doctype html>
+<html lang="pt">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0d2419">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Duelo de Onzes">
+<meta name="description" content="Jogo de futebol para jogar com amigos: faz o teu onze num draft com regras e decide os lances às escondidas. No mesmo telemóvel, online, em torneios ou em ligas. Grátis.">
+<meta property="og:type" content="website"><meta property="og:site_name" content="Duelo de Onzes">
+<meta property="og:title" content="Duelo de Onzes · XI Duel"><meta property="og:description" content="Faz o teu onze, desafia os amigos e decide os lances às escondidas. Grátis, no telemóvel, em português e inglês.">
+<meta property="og:url" content="https://duelodeonzes.github.io/"><meta property="og:image" content="https://duelodeonzes.github.io/icon-512.png">
+<meta name="twitter:card" content="summary">
+<link rel="canonical" href="https://duelodeonzes.github.io/">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<style>#instBtn{border-color:var(--gold)!important;color:var(--gold)!important}#instTip{position:fixed;left:16px;right:16px;bottom:max(16px,env(safe-area-inset-bottom));z-index:9999;background:#173a2a;border:1px solid #3b6b52;border-radius:16px;padding:16px;color:#eef6ef;font:16px/1.45 system-ui,sans-serif;box-shadow:0 10px 30px rgba(0,0,0,.5)}#instTip b{color:#ffd166}#instTip button{margin-top:10px;font:700 16px system-ui;padding:10px 18px;border-radius:10px;border:0;background:#ffd166;color:#14110a}</style>
+<script>(function(){
+if("serviceWorker" in navigator)window.addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){})});
+var dp=null,standalone=matchMedia("(display-mode: standalone)").matches||navigator.standalone;
+window.addEventListener("beforeinstallprompt",function(e){e.preventDefault();dp=e;show()});
+function tip(h){var o=document.getElementById("instTip");if(o)o.remove();var t=document.createElement("div");t.id="instTip";t.innerHTML=h+'<br><button>Percebi</button>';t.querySelector("button").onclick=function(){t.remove()};document.body.appendChild(t)}
+function show(){if(standalone)return;var row=document.querySelector("#sStart .minirow");if(!row||document.getElementById("instBtn"))return;
+  var b=document.createElement("button");b.className="minibtn";b.id="instBtn";b.textContent="Instalar app";row.prepend(b);
+  b.onclick=function(){if(dp){dp.prompt();dp.userChoice.then(function(){dp=null;b.remove()});return}
+    if(/iphone|ipad|ipod/i.test(navigator.userAgent))tip('No iPhone: abre no <b>Safari</b>, toca em <b>Partilhar</b> (o quadrado com a seta) e depois em <b>Adicionar ao ecrã principal</b>. O jogo fica com ícone e abre em ecrã inteiro.');
+    else tip('No menu do browser (⋮), escolhe <b>Instalar app</b> ou <b>Adicionar ao ecrã principal</b>.')}}
+document.addEventListener("DOMContentLoaded",show);
+})();</script>
+<link rel="preload" as="script" href="db-3154af54c2.js"><link rel="preload" as="script" href="app-ae549602f8.js">
+<title>Duelo de Onzes</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="fonts.css">
+<style>
+/* Layout: night-match turf, one column for phones; draft screen = rule card on top, eligible list below, squads in tabs; scoreboard + live feed for the match */
+:root{
+  --turf:#0d2419; --turf2:#123222; --turf3:#18412c; --chalk:#eef6ef; --muted:#9dbda8; --lineC:#2a5a40;
+  --home:#ff5d4f; --away:#4fa9ff; --gold:#ffd166; --onGold:#1a1405;
+  --display:"Big Shoulders Display","Arial Narrow",Impact,sans-serif;
+  --body:"Barlow",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --cond:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
+  color-scheme:dark;
+}
+[hidden]{display:none!important}
+html,body{height:100%}
+body{margin:0;background:var(--turf);color:var(--chalk);font-family:var(--body);font-size:16px;
+  background-image:repeating-linear-gradient(180deg,var(--turf) 0 64px,var(--turf2) 64px 128px);background-attachment:fixed;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));-webkit-tap-highlight-color:transparent}
+.app{max-width:480px;margin:0 auto;padding-block:max(14px,env(safe-area-inset-top,0px)) max(14px,env(safe-area-inset-bottom,0px));height:100vh;height:100dvh;box-sizing:border-box;display:flex;flex-direction:column;overflow:hidden}
+.screen{display:flex;flex-direction:column;gap:14px;flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+.screen.fit{overflow:hidden}
+.scroll{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain}
+h1{font-family:var(--display);font-weight:900;font-size:3rem;line-height:.92;margin:0;text-transform:uppercase;letter-spacing:.01em}
+h1 em{font-style:normal;color:var(--gold)}
+h2{font-family:var(--display);font-weight:900;font-size:1.7rem;line-height:1;margin:0;text-transform:uppercase}
+.lbl{font-family:var(--cond);font-weight:700;font-size:.85rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+p{margin:0;line-height:1.5}
+.muted{color:var(--muted)}
+.grow{flex:1}
+.panel{background:rgba(0,0,0,.28);border:1px solid var(--lineC);border-radius:18px;padding:16px}
+input[type=text],input[type=search]{width:100%;box-sizing:border-box;background:var(--turf3);border:1px solid var(--lineC);color:var(--chalk);border-radius:12px;padding:13px 14px;font:inherit}
+input:focus{outline:2px solid var(--gold);outline-offset:1px}
+.field{display:flex;flex-direction:column;gap:6px}
+.dot{display:inline-block;width:12px;height:12px;border-radius:50%;background:var(--c);flex:none}
+.toggle{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.toggle input{width:22px;height:22px;accent-color:var(--gold);flex:none}
+.btn{width:100%;border:0;border-radius:14px;padding:16px;font-family:var(--display);font-weight:900;font-size:1.35rem;text-transform:uppercase;letter-spacing:.04em;cursor:pointer;background:var(--gold);color:var(--onGold)}
+.btn.ghost{background:transparent;color:var(--chalk);border:1px solid var(--lineC);font-family:var(--body);font-weight:700;font-size:1rem;text-transform:none;letter-spacing:0}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.who{display:flex;align-items:center;gap:10px;font-family:var(--display);font-weight:900;font-size:1.6rem;text-transform:uppercase;line-height:1;color:var(--c)}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{background:var(--turf3);border:1px solid var(--lineC);color:var(--chalk);border-radius:999px;padding:9px 14px;font-family:var(--cond);font-weight:700;font-size:1rem;cursor:pointer}
+.chip[aria-pressed=true]{background:var(--gold);border-color:var(--gold);color:var(--onGold)}
+.chip small{font-weight:600;opacity:.75}
+/* coaches */
+.coaches{display:flex;flex-direction:column;gap:8px}
+.coach{display:grid;grid-template-columns:1fr auto;gap:2px 12px;text-align:left;background:var(--turf3);border:1px solid var(--lineC);border-radius:14px;padding:12px 14px;color:var(--chalk);font:inherit;cursor:pointer}
+.coach b{font-family:var(--cond);font-size:1.2rem;font-weight:700}
+.coach .f{font-family:var(--display);font-weight:900;font-size:1.2rem;color:var(--gold);grid-row:span 2;align-self:center}
+.coach span{font-size:.9rem;color:var(--muted)}
+.coach[aria-pressed=true]{border-color:var(--gold);box-shadow:inset 0 0 0 2px var(--gold)}
+.coach:disabled{opacity:.35;cursor:not-allowed}
+/* draft */
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.rule{background:var(--chalk);color:var(--turf);border-radius:18px;padding:18px 18px 16px;display:flex;flex-direction:column;gap:6px}
+.rule .lbl{color:var(--turf3)}
+.rule .r{font-family:var(--display);font-weight:900;font-size:2.1rem;line-height:.98;text-transform:uppercase;text-wrap:balance;overflow-wrap:anywhere}
+.needs{display:flex;gap:6px;flex-wrap:wrap}
+.need{font-family:var(--cond);font-weight:700;background:var(--turf3);border-radius:8px;padding:5px 9px;font-size:.95rem}
+.need.zero{opacity:.35;text-decoration:line-through}
+.list{display:flex;flex-direction:column;gap:6px;max-height:46vh;overflow-y:auto;padding-right:2px}
+.pl{display:grid;grid-template-columns:44px 1fr auto;align-items:center;gap:10px;background:var(--turf3);border:1px solid var(--lineC);border-radius:12px;padding:10px 12px;color:var(--chalk);font:inherit;text-align:left;cursor:pointer;min-width:0}
+.pl:active{transform:scale(.99)}
+.pos{font-family:var(--cond);font-weight:700;font-size:.85rem;text-align:center;border-radius:6px;padding:3px 0;background:var(--lineC)}
+.pos.GR{background:#7a5c12}.pos.DEF{background:#1f4f7a}.pos.MED{background:#2c6a3c}.pos.AVA{background:#7a2626}
+.pl .nm{font-weight:700;overflow-wrap:anywhere;min-width:0}
+.pl .nm small{display:block;font-weight:400;color:var(--muted);font-size:.85rem}
+.rt{font-family:var(--display);font-weight:900;font-size:1.3rem;color:var(--gold);font-variant-numeric:tabular-nums}
+.empty{color:var(--muted);text-align:center;padding:18px}
+.tabs{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.tab{background:transparent;border:1px solid var(--lineC);color:var(--muted);border-radius:12px;padding:10px;font-family:var(--cond);font-weight:700;font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px}
+.tab[aria-pressed=true]{color:var(--chalk);border-color:var(--c);box-shadow:inset 0 0 0 1px var(--c)}
+/* lineup */
+.xi{display:flex;flex-direction:column;gap:8px}
+.xi .row{display:grid;grid-template-columns:44px 1fr;gap:10px;align-items:start}
+.xi .names{display:flex;flex-wrap:wrap;gap:6px;min-width:0}
+.tagp{background:var(--turf3);border-radius:8px;padding:5px 9px;font-weight:600;font-size:.95rem;overflow-wrap:anywhere}
+.tagp.slot{border:1px dashed var(--lineC);background:transparent;color:var(--muted)}
+.tagp b{color:var(--gold);font-family:var(--cond);margin-left:4px}
+.teamhead{display:flex;flex-direction:column;gap:4px;border-left:4px solid var(--c);padding-left:12px}
+.teamhead .t{font-family:var(--display);font-weight:900;font-size:1.6rem;text-transform:uppercase;line-height:1}
+/* pitch */
+.pitch{position:relative;width:100%;max-width:100%;aspect-ratio:5/6;border-radius:16px;overflow:hidden;border:2px solid rgba(238,246,239,.55);
+  background:repeating-linear-gradient(180deg,#1f6b3f 0 10%,#237446 10% 20%);display:flex;flex-direction:column;justify-content:space-around;padding:10px 4px;box-sizing:border-box}
+.pitch.sm{aspect-ratio:auto;min-height:340px}
+.pitch i{position:absolute;pointer-events:none;border:2px solid rgba(238,246,239,.45)}
+.pitch .half{left:0;right:0;top:50%;height:0;border-width:2px 0 0}
+.pitch .circ{left:50%;top:50%;width:26%;aspect-ratio:1;border-radius:50%;transform:translate(-50%,-50%)}
+.pitch .boxT{left:24%;right:24%;top:-2px;height:13%;border-top:0}
+.pitch .boxB{left:24%;right:24%;bottom:-2px;height:13%;border-bottom:0}
+.prow{position:relative;display:flex;justify-content:space-around;align-items:flex-start;gap:2px;z-index:1}
+.slot{display:flex;flex-direction:column;align-items:center;gap:3px;width:72px;min-width:0;background:none;border:0;padding:0;color:var(--chalk);font:inherit;cursor:pointer}
+.slot:disabled{cursor:default}
+.disc{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;font-family:var(--cond);font-weight:700;font-size:.95rem;
+  border:2px dashed rgba(238,246,239,.8);background:rgba(13,36,25,.55)}
+.slot.full .disc{border:2px solid #fff;background:var(--c);color:#fff;box-shadow:0 2px 6px rgba(0,0,0,.35)}
+.slot.sel .disc{border:3px solid var(--gold);box-shadow:0 0 0 4px rgba(255,209,102,.35)}
+.slot .nm2{font-family:var(--cond);font-weight:700;font-size:.8rem;line-height:1.1;text-align:center;background:rgba(5,13,9,.8);border-radius:5px;padding:2px 5px;max-width:72px;box-sizing:border-box;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.slot .rt2{font-family:var(--display);font-weight:900;font-size:.95rem;line-height:1;color:var(--gold);text-shadow:0 1px 2px rgba(0,0,0,.6)}
+.youth .disc{background:#5b5b5b!important}
+.ask{display:flex;flex-direction:column;gap:10px}
+.askrow{display:flex;gap:8px}
+.askrow input{flex:1;min-width:0}
+.askrow .go{flex:none;width:auto;padding:0 18px;font-size:1.1rem}
+.tries{display:flex;gap:6px;align-items:center}
+.tries i{width:12px;height:12px;border-radius:50%;background:var(--gold)}
+.tries i.off{background:var(--turf3);border:1px solid var(--lineC)}
+.msg{min-height:1.4em;font-weight:600;line-height:1.4}
+.msg.bad{color:var(--home)} .msg.ok{color:#7fe0a8}
+.toast{background:rgba(127,224,168,.14);border:1px solid #2f7a52;border-radius:12px;padding:10px 14px;font-weight:600}
+.linkbtn{background:none;border:0;color:var(--muted);text-decoration:underline;font:inherit;cursor:pointer;padding:4px 0;align-self:flex-start}
+.code{font-family:var(--display);font-weight:900;font-size:3.6rem;letter-spacing:.18em;color:var(--gold);line-height:1}
+.toast.wait{background:rgba(255,209,102,.12);border-color:#7a6230}
+.htRow{display:flex;flex-direction:column;gap:8px}
+.fchips .chip{padding:6px 10px;font-size:.92rem}
+.brRound{display:flex;flex-direction:column;gap:8px}
+.brRound.third{opacity:.92}.brRound.third .lbl{color:#d9a066}
+.brPod{font-family:var(--cond);font-weight:700;font-size:1.05rem;letter-spacing:.06em;color:var(--muted);margin-top:4px}
+.brMatch{background:rgba(0,0,0,.28);border:1px solid var(--lineC);border-radius:14px;overflow:hidden}
+.brTeam{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;padding:10px 14px;font-weight:700}
+.brTeam+.brTeam{border-top:1px solid var(--lineC)}
+.brTeam.lose{opacity:.45}
+.brTeam.win b{color:var(--gold)}
+.brTeam .bn{min-width:0;overflow-wrap:anywhere}
+.brTeam b{font-family:var(--display);font-size:1.2rem;font-variant-numeric:tabular-nums}
+.seaProg .sm{display:flex;justify-content:space-between;color:var(--muted);font:600 .82rem var(--body)}.seaProg .bar{height:6px;background:var(--turf3);border-radius:99px;overflow:hidden;margin-top:8px}.seaProg .bar i{display:block;height:100%;background:var(--gold);border-radius:99px}
+.seaHero{border-radius:26px;padding:16px;background:linear-gradient(135deg,#1e3a2a 0%,#141922 55%,#1b2740 100%);border:1px solid var(--lineC);display:flex;flex-direction:column;gap:12px}
+.seaHero .sm,.sm{color:var(--muted);font:600 .82rem var(--body)}
+.seaVs{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;text-align:center}.seaVs .t{display:flex;flex-direction:column;align-items:center;gap:4px}.seaVs .t b{font:700 1rem var(--body)}
+.seaVs .x{font:900 1.4rem var(--display);color:var(--muted)}
+.seaTbl{padding:10px 8px 4px}.seaTbl td.p{color:var(--muted);text-align:left}.seaTbl td.n{display:flex;align-items:center;gap:6px}.seaTbl td.pts{font-weight:800}
+.form{display:inline-flex;gap:3px}.form i{width:8px;height:8px;border-radius:50%;display:inline-block;background:var(--muted)}.form i.fV{background:var(--gold)}.form i.fD{background:var(--home)}
+.seaBack{border:1px solid var(--lineC);border-radius:14px;justify-content:flex-start}
+.seaFx{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 10px;border-radius:12px;background:var(--turf3);font-weight:700}
+.seaFx.mine{border:1px solid var(--gold)}.seaFx .t{min-width:0;overflow:hidden;text-overflow:ellipsis}.seaBtns{display:flex;gap:6px;flex:none}.seaBtns .btn{padding:8px 10px;font-size:.95rem;width:auto}
+.seaRd{margin-top:8px}.seaInv{display:flex;justify-content:space-between;align-items:center;gap:8px;background:rgba(255,209,102,.12);border:1px solid var(--gold);border-radius:12px;padding:8px 10px}.seaInv .btn{width:auto;padding:8px 14px}
+.seaPl{display:grid;grid-template-columns:44px 1fr auto;gap:8px;padding:5px 2px;border-top:1px solid rgba(255,255,255,.06)}.seaPl .pos{font:800 .85rem var(--cond);color:var(--muted)}.seaPl .r{color:var(--gold);font-weight:800}
+.seaMk{display:flex;flex-direction:column;gap:8px}.seaChamp{font:900 1.6rem var(--display);color:var(--gold);text-transform:uppercase}
+.lgTable{width:100%;border-collapse:collapse;font-family:var(--cond);font-size:1rem}.lgTable th{font-size:.8rem;color:var(--muted);text-align:right;padding:4px;font-weight:700}
+.lgTable td{text-align:right;padding:7px 4px;border-top:1px solid rgba(255,255,255,.07);font-weight:700}.lgTable td.n,.lgTable th:nth-child(2){text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:9em}
+.lgTable tr.me td{color:var(--gold)}.lgPick b{color:var(--gold)}
+.hrow{display:flex;justify-content:space-between;gap:10px;align-items:baseline;font-weight:600}
+.feed li.red{background:rgba(255,93,79,.16)}
+.dstr{text-align:center;font-family:var(--cond);font-weight:700;color:var(--muted);letter-spacing:.04em;display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap}
+.dsep{opacity:.5}
+.chemBtn{display:inline-flex;align-items:center;gap:6px;background:rgba(127,224,168,.1);border:1px solid #2f7a52;border-radius:999px;padding:3px 6px 3px 10px;color:var(--chalk);font:inherit;cursor:pointer}
+.chemBar{display:inline-block;width:44px;height:6px;border-radius:3px;background:rgba(255,255,255,.15);overflow:hidden}.chemBar i{display:block;height:100%;background:#7fe0a8}
+.chemQ{display:inline-grid;place-items:center;width:16px;height:16px;border-radius:50%;background:#2f7a52;font-size:.75rem}
+.chm{display:flex;gap:4px;justify-content:center;margin-top:2px}.chm b{display:block;width:6px;height:6px;transform:rotate(45deg);background:rgba(5,13,9,.65);border:1px solid rgba(255,255,255,.45)}
+.chm b.on{background:#7fe0a8;border-color:#7fe0a8}.chm b.half{background:rgba(127,224,168,.4);border-color:#7fe0a8}
+.chemLegend{display:flex;align-items:center;gap:10px;background:var(--turf3);border-radius:10px;padding:10px 12px}.chemLegend .chm b{width:9px;height:9px}
+#pickCard{position:fixed;left:50%;bottom:max(18px,env(safe-area-inset-bottom,0px));transform:translateX(-50%);width:min(440px,calc(100% - 32px));box-sizing:border-box;z-index:40;
+  background:#06120c;border:2px solid var(--c);border-radius:18px;padding:16px;display:flex;flex-direction:column;gap:8px;box-shadow:0 12px 40px rgba(0,0,0,.6);cursor:pointer}
+#pickCard.in{animation:cardin .45s cubic-bezier(.2,.9,.3,1.2)}
+@keyframes cardin{from{transform:translateX(-50%) translateY(40px) rotateY(80deg);opacity:0}to{transform:translateX(-50%);opacity:1}}
+.pcTop{display:flex;gap:14px;align-items:center}
+.pcR{flex:none;width:58px;height:58px;border-radius:14px;background:var(--gold);color:var(--onGold);display:grid;place-items:center;font-family:var(--display);font-weight:900;font-size:1.9rem}
+.pcN{display:flex;flex-direction:column;min-width:0}.pcN b{font-family:var(--display);font-weight:900;font-size:1.5rem;line-height:1;text-transform:uppercase;overflow-wrap:anywhere}
+.pcN span{color:var(--muted);font-size:.9rem}
+.pcV{font-family:var(--display);font-weight:900;font-size:1.3rem;text-transform:uppercase;color:var(--c)}
+.pcL{color:var(--muted);font-size:.92rem}
+.pcChem{font-weight:700;color:#7fe0a8}
+.mombox{display:flex;flex-direction:column;gap:12px;border-color:var(--gold)}
+.momres{display:flex;flex-direction:column;gap:6px}
+.momres .rv{color:var(--muted);font-size:.92rem}
+.momres .rt3{font-family:var(--display);font-weight:900;font-size:1.4rem;line-height:1.1;text-transform:uppercase}
+.momres .rt3.g{color:var(--gold)}
+.feed li.mom{background:rgba(255,209,102,.08)}
+@media (prefers-reduced-motion:reduce){#pickCard.in{animation:none}}
+#dSug .pl,#dList .pl{grid-template-columns:44px 1fr auto}
+.pl.on{border-color:var(--gold);box-shadow:inset 0 0 0 2px var(--gold)}
+.pl.taken{opacity:.45;cursor:not-allowed}
+.pick{display:flex;flex-direction:column;gap:10px;background:rgba(255,209,102,.08);border:1px solid #7a6230;border-radius:14px;padding:12px}
+.pickInfo{display:flex;flex-direction:column;gap:2px}.pickInfo b{font-family:var(--display);font-weight:900;font-size:1.5rem;text-transform:uppercase;line-height:1.05}
+.disc{position:relative}
+.cbadge{position:absolute;top:-6px;right:-8px;width:20px;height:20px;border-radius:50%;background:var(--gold);color:var(--onGold);font-style:normal;font-family:var(--display);font-weight:900;font-size:.8rem;display:grid;place-items:center;border:2px solid #06120c}
+.slot.cap .disc{box-shadow:0 0 0 3px var(--gold)}
+.fxwrap{position:relative;border-radius:14px;overflow:hidden;border:2px solid rgba(238,246,239,.45)}
+#fxPitch{display:block;width:100%;height:auto}
+.fxcap{position:absolute;left:0;right:0;bottom:0;padding:6px 10px;background:linear-gradient(transparent,rgba(5,13,9,.85));font-family:var(--cond);font-weight:700;font-size:1rem;text-align:center;min-height:1.2em}
+.fxcap.big{font-family:var(--display);font-weight:900;font-size:2.2rem;color:var(--gold);bottom:35%;background:none;text-shadow:0 2px 8px rgba(0,0,0,.7)}
+#scene{position:fixed;inset:0;z-index:45;background:rgba(3,8,5,.94);display:grid;place-items:center;padding:16px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.scbox{width:min(520px,100%);display:flex;flex-direction:column;gap:8px;position:relative}
+#scCv{display:block;width:100%;border-radius:16px;border:2px solid rgba(238,246,239,.5);background:#14301f}
+.sctitle{font-family:var(--cond);font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--gold)}
+.sccap{font-family:var(--cond);font-weight:700;font-size:1.1rem;text-align:center;min-height:1.4em}
+.sccap.big{font-family:var(--display);font-weight:900;font-size:2.6rem;color:var(--gold);line-height:1}
+.schint{font-size:.8rem;color:var(--muted);text-align:center}
+.tv{position:relative;border-radius:16px;overflow:hidden;border:2px solid #2a5a40;background:#0b1a12;box-shadow:0 10px 30px rgba(0,0,0,.45);cursor:pointer}
+.tv.live{border-color:var(--gold)}
+#scCv{display:block;width:100%;aspect-ratio:16/10;height:auto}
+.bug{position:absolute;top:8px;left:8px;display:flex;align-items:stretch;border-radius:7px;overflow:hidden;font-family:var(--cond);font-weight:700;box-shadow:0 2px 8px rgba(0,0,0,.5);max-width:calc(100% - 16px)}
+.bug .bt{background:rgba(5,13,9,.88);padding:4px 8px;font-size:.92rem;max-width:26vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1.4}
+.bug b{background:#eef6ef;color:#0d2419;padding:2px 9px;font-family:var(--display);font-weight:900;font-size:1.1rem;line-height:1.3;font-variant-numeric:tabular-nums}
+.bug .bm{background:var(--gold);color:var(--onGold);padding:4px 8px;font-size:.92rem;font-variant-numeric:tabular-nums;line-height:1.4}
+.lower{position:absolute;left:8px;bottom:40px;background:var(--gold);color:var(--onGold);font-family:var(--cond);font-weight:700;text-transform:uppercase;letter-spacing:.05em;padding:3px 10px;border-radius:4px;font-size:.85rem;max-width:calc(100% - 16px)}
+.sccap{position:absolute;left:0;right:0;bottom:0;padding:16px 12px 8px;background:linear-gradient(transparent,rgba(5,13,9,.92));font-family:var(--cond);font-weight:700;font-size:1rem;line-height:1.25;text-align:center;transition:opacity .2s}
+.sccap.off{opacity:0}
+.sccap.big{padding:22px 12px 8px;font-family:var(--display);font-weight:900;font-size:clamp(1.5rem,7vw,2.2rem);line-height:1;color:var(--gold);text-shadow:0 3px 14px rgba(0,0,0,.85);letter-spacing:.02em}
+@media (prefers-reduced-motion:no-preference){.sccap.big{animation:capin .35s cubic-bezier(.2,.9,.3,1.3)}@keyframes capin{from{transform:scale(.6);opacity:0}}}
+#dPick,#claimBox{position:fixed;left:0;right:0;bottom:0;z-index:35;border-radius:18px 18px 0 0;border:0;border-top:2px solid var(--gold);background:#0a1a12;box-shadow:0 -10px 30px rgba(0,0,0,.55);
+  padding:14px max(16px,env(safe-area-inset-right,0px)) calc(14px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+#dPick>*,#claimBox>*{max-width:480px;margin-inline:auto;width:100%}
+body.picking .askpage .list{padding-bottom:170px}
+#claimBox{z-index:36}#claimBox .pickInfo p{margin:0;line-height:1.4}
+/* match */
+.board{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px;background:#050d09;border:2px solid var(--lineC);border-radius:18px;padding:16px 12px}
+.board .tm{font-family:var(--cond);font-weight:700;font-size:1.05rem;text-align:center;overflow-wrap:anywhere;line-height:1.15}
+.board .sc{font-family:var(--display);font-weight:900;font-size:3.4rem;line-height:1;font-variant-numeric:tabular-nums;letter-spacing:.04em;text-align:center}
+.clock{text-align:center;font-family:var(--display);font-weight:900;font-size:1.3rem;color:var(--gold);font-variant-numeric:tabular-nums}
+.feed{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;flex:1;min-height:0;overflow-y:auto}
+.feed li{display:grid;grid-template-columns:40px 1fr;gap:8px;background:rgba(0,0,0,.25);border-radius:10px;padding:9px 12px;line-height:1.35;border-left:4px solid var(--c,transparent)}
+.feed li .m{font-family:var(--cond);font-weight:700;color:var(--muted);font-variant-numeric:tabular-nums}
+.feed li.goal{background:rgba(255,209,102,.14)}
+.feed li.goal .tx{font-weight:700}
+.feed li.info{border-left-color:var(--chalk)}
+/* result */
+.stats{display:flex;flex-direction:column;gap:10px}
+.stat{display:grid;grid-template-columns:44px 1fr 44px;align-items:center;gap:8px}
+.stat .v{font-family:var(--display);font-weight:900;font-size:1.3rem;text-align:center;font-variant-numeric:tabular-nums}
+.stat .mid{display:flex;flex-direction:column;gap:4px;min-width:0}
+.stat .k{font-family:var(--cond);font-weight:700;text-align:center;color:var(--muted);font-size:.9rem;letter-spacing:.08em;text-transform:uppercase}
+.bar{display:flex;height:8px;border-radius:4px;overflow:hidden;background:var(--turf3)}
+.bar i{display:block;height:100%}
+.mvp{display:flex;flex-direction:column;gap:4px;align-items:center;text-align:center}
+.rcard{position:relative;overflow:hidden;background:linear-gradient(160deg,#08140e,#0c2116 60%,#102a1c);border:1px solid var(--lineC);border-radius:20px;padding:18px 14px 16px;display:flex;flex-direction:column;gap:12px;flex:none}
+.rcard::before{content:"";position:absolute;inset:auto -30% -60% -30%;height:140%;background:radial-gradient(closest-side,rgba(255,209,102,.10),transparent);pointer-events:none}
+.rteams{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px}
+.rteam{display:flex;flex-direction:column;align-items:center;gap:6px;min-width:0;text-align:center}
+.rteam b{font-family:var(--display);font-weight:900;font-size:1.25rem;text-transform:uppercase;line-height:1;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rteam small{color:var(--muted);font-size:.8rem;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rteam.lose{opacity:.55}
+.crest{width:54px;height:54px;border-radius:50%;display:grid;place-items:center;font-family:var(--display);font-weight:900;font-size:1.6rem;color:#fff;background:radial-gradient(circle at 35% 30%,color-mix(in srgb,var(--c) 70%,#fff),var(--c) 55%,color-mix(in srgb,var(--c) 60%,#000));box-shadow:0 6px 16px rgba(0,0,0,.45),inset 0 -3px 6px rgba(0,0,0,.25);border:3px solid rgba(255,255,255,.85)}
+.rteam.win .crest{border-color:var(--gold);box-shadow:0 0 0 4px rgba(255,209,102,.25),0 6px 16px rgba(0,0,0,.45)}
+.rscore{display:flex;flex-direction:column;align-items:center;gap:6px}
+.rscore .sc{font-family:var(--display);font-weight:900;font-size:clamp(2.8rem,15vw,3.8rem);line-height:.9;font-variant-numeric:tabular-nums;letter-spacing:.02em;white-space:nowrap}
+.rscore .pens{font-family:var(--cond);font-weight:700;font-size:.85rem;letter-spacing:.06em;text-transform:uppercase;background:var(--gold);color:var(--onGold);border-radius:999px;padding:3px 10px;white-space:nowrap}
+.rwin{font-family:var(--display);font-weight:900;font-size:1.5rem;text-transform:uppercase;text-align:center;line-height:1.05}
+.mvp2{display:flex;align-items:center;gap:14px}
+.goalpick{display:flex;flex-direction:column;gap:8px;width:100%}
+.gpGoal{position:relative;width:100%;max-width:420px;margin:0 auto;aspect-ratio:2.4/1;border:5px solid #f4f6f5;border-bottom:0;border-radius:4px 4px 0 0;box-sizing:border-box;
+  background:#2457a8 repeating-linear-gradient(90deg,rgba(255,255,255,.06) 0 10px,transparent 10px 20px);box-shadow:inset 0 0 0 2px rgba(0,0,0,.25),0 6px 0 -2px #3b7a4f}
+.gpGoal .gp{position:absolute;height:40%;aspect-ratio:1;width:auto;border-radius:50%;padding:0;border:3px solid #f4f6f5;background:radial-gradient(circle at 50% 45%,#9fd88a,#4c8f3d);color:#0b1a12;
+  display:grid;place-items:center;font:800 .7rem var(--cond);letter-spacing:.02em;text-transform:uppercase;cursor:pointer;transition:transform .12s;overflow:hidden}
+.gpGoal .gp:hover,.gpGoal .gp:focus-visible{transform:scale(1.07);outline:3px solid var(--gold)}
+.gpGoal .gpTE{left:4%;top:6%}.gpGoal .gpTD{right:4%;top:6%}.gpGoal .gpM{left:50%;top:30%;translate:-50% 0}.gpGoal .gpBE{left:17%;bottom:5%}.gpGoal .gpBD{right:17%;bottom:5%}
+.gphint{font-size:.85rem;margin:0}
+#notes{display:flex;flex-direction:column;gap:10px;margin-top:8px}
+.nlist{display:flex;flex-direction:column}
+.nrow{display:grid;grid-template-columns:44px 1fr auto;align-items:center;gap:10px;padding:7px 4px 7px 0;border-top:1px solid rgba(255,255,255,.06)}
+.nrow:first-child{border-top:0}
+.nrow.sub{opacity:.92}.nrow.sub .nn::after{content:" (suplente)";font-weight:400;color:var(--muted);font-size:.8rem}
+.nota{display:grid;place-items:center;height:30px;border-radius:9px;font-family:var(--cond);font-weight:800;font-size:1.05rem;color:#0b1a12}
+.nota.n8{background:#3ddc84}.nota.n7{background:#a6e36b}.nota.n6{background:#e9e4b0}.nota.n5{background:#ff8a7a}
+.nwho{display:flex;flex-direction:column;min-width:0;line-height:1.15}
+.nwho .nn{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nwho .npos{font-family:var(--cond);font-size:.72rem;letter-spacing:.12em;color:var(--muted)}
+.nwho .ndet{font-size:.78rem;color:var(--muted)}
+.nic{display:flex;gap:4px;align-items:center;flex-wrap:wrap;justify-content:flex-end;max-width:120px}
+.nic i{font-style:normal;font-size:.8rem}
+.nic .ia{font-family:var(--cond);font-weight:800;background:rgba(255,255,255,.12);border-radius:5px;padding:0 4px}
+.nic .cy,.nic .cr{display:inline-block;width:9px;height:13px;border-radius:2px;background:#ffd23f;transform:rotate(-6deg)}
+.nic .cr{background:#e5251b}.nic .cr.y2{box-shadow:-4px 1px 0 -1px #ffd23f}
+.nic .nsub{font-family:var(--cond);font-weight:700;color:#3ddc84}.nic .nsub.o{color:#ff8a7a}
+.mvp2 .mvpR{flex:none;width:58px;height:58px;border-radius:14px;background:var(--gold);color:var(--onGold);display:grid;place-items:center;font-family:var(--display);font-weight:900;font-size:1.9rem}
+.mvp2 .n{font-family:var(--display);font-weight:900;font-size:1.6rem;text-transform:uppercase;color:var(--gold);line-height:1;overflow-wrap:anywhere;margin:2px 0}
+.stats{display:flex;flex-direction:column;gap:12px;margin-top:10px}
+.srow{display:grid;grid-template-columns:52px 1fr 52px;align-items:center;gap:10px}
+.srow .v{font-family:var(--display);font-weight:900;font-size:1.25rem;font-variant-numeric:tabular-nums;color:var(--muted);text-align:center}
+.srow .v.hi{color:var(--chalk)}
+.srow .k{font-family:var(--cond);font-weight:700;font-size:.82rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);text-align:center;display:block;margin-bottom:5px}
+.sbarx{display:grid;grid-template-columns:1fr 1fr;gap:3px;height:7px}
+.sbarx>div{background:rgba(255,255,255,.08);border-radius:4px;overflow:hidden;display:flex}
+.sbarx>div:first-child{justify-content:flex-end}
+.sbarx i{display:block;height:100%;border-radius:4px}
+.ractions{position:sticky;bottom:0;display:flex;flex-direction:column;gap:10px;padding:12px 0 2px;background:linear-gradient(transparent,var(--turf) 30%);margin-top:auto}
+.mvp .n{font-family:var(--display);font-weight:900;font-size:2rem;text-transform:uppercase;color:var(--gold);line-height:1}
+.row2{display:flex;gap:10px}.row2>*{flex:1}
+@media (prefers-reduced-motion:no-preference){.feed li{animation:in .25s ease-out}@keyframes in{from{opacity:0;transform:translateY(-4px)}}}
+/* ---- ecrã inicial ---- */
+.hero{position:relative;display:flex;flex-direction:column;gap:12px;padding:26px 4px 8px;isolation:isolate}
+.hero svg.pitchbg{position:absolute;inset:-14px -30px auto;width:calc(100% + 60px);height:auto;z-index:-1;opacity:.5}
+.hero::before{content:"";position:absolute;inset:-40px -60px auto;height:260px;z-index:-2;background:radial-gradient(60% 70% at 50% 0%,rgba(255,240,200,.18),transparent 70%)}
+.hero h1{font-size:clamp(3.4rem,17vw,4.6rem);line-height:.86;text-shadow:0 6px 30px rgba(0,0,0,.5)}
+.hero h1 em{display:block}
+/* página principal fixa: nunca faz scroll; se não couber, vai compactando por passos */
+#sStart{overflow-y:auto}
+#sStart .minibtn{white-space:nowrap}
+#sStart .hero h1{white-space:nowrap;font-size:min(4.6rem,14.5vw)}
+#sStart.fit1 .facts{display:none}#sStart.fit1 .hero{padding-top:8px;gap:8px}#sStart.fit1 .hero h1{font-size:min(3.6rem,12.5vw)}
+#sStart.fit2 .mode{padding:9px 12px;border-radius:14px}#sStart.fit2 .mode .ic{width:36px;height:36px}#sStart.fit2 .mode b{font-size:1.1rem}#sStart.fit2 .modes{gap:7px}
+#sStart.fit2 .mode small{font-size:.82rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#sStart.fit2 .mode{grid-template-columns:36px minmax(0,1fr) 14px}
+#sStart.fit3 .hero p,#sStart.fit3 .hero svg.pitchbg{display:none}#sStart.fit3 .hero h1{font-size:min(3rem,11vw)}#sStart.fit3{gap:8px}
+#sStart.fit4 .mode small,#sStart.fit4 .kick{display:none}#sStart.fit4 .mode{padding:8px 12px}
+.kick{display:inline-flex;align-items:center;gap:8px;align-self:flex-start;background:rgba(255,209,102,.12);border:1px solid rgba(255,209,102,.4);color:var(--gold);border-radius:999px;padding:5px 12px;font-family:var(--cond);font-weight:700;letter-spacing:.1em;text-transform:uppercase;font-size:.8rem}
+.facts{display:flex;gap:8px;flex-wrap:wrap}
+.facts span{font-family:var(--cond);font-weight:700;font-size:.95rem;background:rgba(0,0,0,.3);border:1px solid var(--lineC);border-radius:10px;padding:6px 10px}
+.facts b{color:var(--gold);font-family:var(--display);font-weight:900;font-size:1.1rem;margin-right:4px}
+.modes{display:flex;flex-direction:column;gap:10px}
+.mode{display:grid;grid-template-columns:44px 1fr 18px;align-items:center;gap:12px;text-align:left;width:100%;background:rgba(0,0,0,.32);border:1px solid var(--lineC);border-radius:16px;padding:13px 14px;color:var(--chalk);font:inherit;cursor:pointer}
+.mode:active{transform:scale(.99)}
+.mode .ic{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;background:var(--turf3);color:var(--gold)}
+.mode b{display:block;font-family:var(--display);font-weight:900;font-size:1.35rem;text-transform:uppercase;letter-spacing:.02em;line-height:1}
+.mode small{display:block;color:var(--muted);font-size:.9rem;margin-top:3px}
+.mode .ar{color:var(--muted);font-size:1.3rem}
+.mode.main{background:var(--gold);border-color:var(--gold);color:var(--onGold)}
+.mode.main .ic{background:rgba(0,0,0,.12);color:var(--onGold)}
+.mode.main small,.mode.main .ar{color:rgba(26,20,5,.7)}
+.minirow{display:flex;justify-content:center;gap:6px}
+#tmPill{position:fixed;top:max(8px,env(safe-area-inset-top,0px));right:10px;z-index:61;background:#050d09;color:var(--chalk);border:2px solid var(--gold);border-radius:999px;padding:5px 12px;font:800 1rem var(--cond);letter-spacing:.03em;box-shadow:0 6px 18px rgba(0,0,0,.4);font-variant-numeric:tabular-nums}
+html.tmOn .askHead{padding-right:86px}
+/* barra do draft: 1.ª linha "Erro?" + ronda (com espaço para o relógio), 2.ª linha de quem é a vez, numa só linha */
+#sDraft .topbar{flex-wrap:wrap;row-gap:6px}html.tmOn #sDraft .topbar{padding-right:86px}
+#dRound{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#dWho{order:3;flex:1 0 100%;min-width:0;font-size:1.25rem!important;white-space:nowrap}#dWho>span:last-child{overflow:hidden;text-overflow:ellipsis;min-width:0}
+html,body{overflow-x:hidden}.app{overflow-x:clip}
+/* páginas fixas: se não couber, compacta por passos */
+#sLobby.fA #lbNote,#sLobby.fA header .lbl{display:none}
+#sLobby.fB #lbWait{gap:6px!important;padding:12px}#sLobby.fB .code{font-size:2.6rem}#sLobby.fB .lbP{padding:6px 12px}#sLobby.fB .btn{padding:11px;font-size:1.15rem}#sLobby.fB .chip{padding:6px 12px}#sLobby.fB{gap:8px}
+#sLobby.fC header{display:none}#sLobby.fC #lbStatus{font-size:.9rem;margin:0}
+#sTour.fA header p{display:none}#sTour.fB .btn{padding:11px;font-size:1.15rem}#sTour.fB .panel{padding:10px}#sTour.fB{gap:8px}#sTour.fC header{display:none}
+#tmPill.low{border-color:#ff5d4f;color:#ff8a80;animation:tmp .9s ease-in-out infinite}
+@keyframes tmp{50%{transform:scale(1.08)}}
+@media (prefers-reduced-motion:reduce){#tmPill.low{animation:none}}
+#netPill{position:fixed;top:max(8px,env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);z-index:60;background:#3a2a05;color:var(--gold);border:1px solid var(--gold);border-radius:999px;padding:6px 14px;font:700 .85rem var(--cond);letter-spacing:.04em;box-shadow:0 6px 18px rgba(0,0,0,.4)}
+.flagbtn{flex:none;background:transparent;border:1px solid var(--lineC);color:var(--muted);border-radius:999px;padding:3px 10px;font:700 .78rem var(--cond);letter-spacing:.06em;cursor:pointer}
+.repRow{display:flex;align-items:center;gap:10px;justify-content:space-between;border:1px solid var(--lineC);border-radius:12px;padding:8px 10px}
+.repRow .t{min-width:0;font-size:.92rem;line-height:1.3}.repRow .t small{display:block;color:var(--muted)}
+.repRow button{flex:none;font:700 .8rem var(--cond);letter-spacing:.04em;border-radius:10px;border:1px solid var(--gold);background:transparent;color:var(--gold);padding:7px 10px;cursor:pointer}
+.repRow button[disabled]{opacity:.5;border-color:var(--lineC);color:var(--muted)}
+.msg .replink{margin-left:6px;background:none;border:0;color:var(--gold);text-decoration:underline;font:inherit;cursor:pointer;padding:0}
+.ver{margin:2px 0 0;text-align:center;font-size:.72rem;color:var(--muted);opacity:.7}
+.botLv{display:flex;flex-direction:column;gap:8px}
+.lv{text-align:left;background:var(--turf3);border:1px solid var(--lineC);border-radius:14px;padding:11px 14px;color:var(--chalk);font:inherit;cursor:pointer}
+.lv b{display:block;font-family:var(--display);font-weight:900;font-size:1.25rem;text-transform:uppercase;line-height:1}
+.lv small{color:var(--muted);font-size:.88rem}
+.lv[aria-pressed=true]{border-color:var(--gold);box-shadow:inset 0 0 0 2px var(--gold)}
+.tbot{display:flex;align-items:center;gap:8px}.tbot input{flex:1;min-width:0}
+.botchip{flex:none;border:1px solid var(--lineC);background:transparent;color:var(--muted);border-radius:10px;padding:10px 10px;font-family:var(--cond);font-weight:700;cursor:pointer}
+.botchip[aria-pressed=true]{background:var(--gold);color:var(--onGold);border-color:var(--gold)}
+.minibtn{background:none;border:1px solid transparent;color:var(--muted);font:inherit;font-weight:600;font-size:.95rem;padding:8px 10px;border-radius:10px;cursor:pointer}
+.minibtn:active{border-color:var(--lineC)}
+/* ---- folhas (definições, nomes, regras) ---- */
+.sheet{position:fixed;inset:0;z-index:60;background:rgba(3,8,5,.6);display:flex;align-items:flex-end;justify-content:center}
+.sheetIn{width:100%;max-width:480px;max-height:88dvh;box-sizing:border-box;overflow-y:auto;background:#0b1f15;border-top:2px solid var(--gold);border-radius:20px 20px 0 0;
+  padding:18px max(16px,env(safe-area-inset-right,0px)) calc(18px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:14px}
+@media (prefers-reduced-motion:no-preference){.sheetIn{animation:up .22s ease-out}@keyframes up{from{transform:translateY(30px);opacity:0}}}
+.shHead{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.xbtn{width:40px;height:40px;flex:none;border-radius:12px;border:1px solid var(--lineC);background:var(--turf3);color:var(--chalk);font-size:1.1rem;cursor:pointer}
+/* ---- treinador ---- */
+#sCoach .coaches{display:grid;grid-template-columns:1fr 1fr;gap:8px;align-content:start}
+#sCoach .coach{grid-template-columns:1fr;padding:10px 12px;gap:1px}
+#sCoach .coach b{font-size:1.05rem;line-height:1.1}
+#sCoach .coach .f{grid-row:auto;font-size:1rem;order:3}
+#sCoach .coach span{font-size:.8rem}
+#formBox{padding:12px}
+/* ---- escolhas: campo a ocupar o espaço livre ---- */
+.pitchbox{flex:1;min-height:0;display:flex;justify-content:center}
+.pitchbox.hasBench{flex-direction:column;align-items:center;gap:6px}
+.pitchbox.hasBench .pitch{height:calc(100% - 50px)}
+.pitchbox .disc,#capPitch .disc{width:clamp(28px,5.2vh,44px);height:clamp(28px,5.2vh,44px);font-size:clamp(.68rem,1.55vh,.95rem)}
+.pitchbox .slot,#capPitch .slot{gap:1px}
+.pitchbox .slot .nm2,#capPitch .slot .nm2{font-size:clamp(.66rem,1.45vh,.8rem);padding:1px 4px}
+.pitchbox .slot .rt2,#capPitch .slot .rt2{font-size:clamp(.7rem,1.5vh,.95rem)}
+.pitchbox .pitch,#capPitch .pitch{padding:4px 2px}
+.bench{padding:3px 10px}.bench .disc{width:26px!important;height:26px!important;font-size:.62rem!important}
+.bench{display:flex;align-items:center;justify-content:center;gap:10px;background:rgba(0,0,0,.3);border:1px solid var(--lineC);border-radius:14px;padding:5px 12px;width:100%;box-sizing:border-box}
+.bench .lbl{font-size:.75rem}
+.bench .slot{flex-direction:row;width:auto;gap:5px;align-items:center}
+.bench .disc{width:30px;height:30px;font-size:.7rem}
+.bench .slot.full .disc{background:var(--c)}
+.bench .nm2{max-width:70px}
+.pitchbox>.lbl{display:none}
+.pitchbox .pitch{height:100%;width:auto;max-width:100%;aspect-ratio:5/6;margin:0 auto;padding:6px 2px}
+#sDraft .rule{padding:12px 14px;gap:3px;border-radius:14px}
+#sDraft .rule .r{font-size:clamp(1.3rem,6.4vw,1.75rem)}
+#sDraft .toast{padding:7px 12px;font-size:.92rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#sDraft .dstr{font-size:.9rem;text-align:center}
+#dPeek{padding:11px}
+.askpage{position:fixed;inset:0;z-index:30;background:var(--turf);display:flex;justify-content:center}
+.askIn{width:100%;max-width:480px;box-sizing:border-box;display:flex;flex-direction:column;gap:12px;padding:max(14px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(14px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));min-height:0;height:100%}
+.askHead{display:flex;align-items:flex-start;gap:12px}
+.askHead .t{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
+.askRule{font-family:var(--display);font-weight:900;font-size:1.35rem;line-height:1;text-transform:uppercase;color:var(--gold);overflow-wrap:anywhere}
+.askpage .ask{flex:1;min-height:0;background:none;border:0;padding:0}
+.askpage .list{flex:1;min-height:0;max-height:none}
+/* ---- antes do jogo e jogo ---- */
+#sPre .tabs{flex:none}
+#sMatch .tv{flex:none}
+.tvzones{position:absolute;inset:0;z-index:5}
+.tvz{position:absolute;border-radius:50%;border:2px solid var(--gold);background:rgba(255,209,102,.18);color:#fff;font:800 .72rem var(--cond);letter-spacing:.04em;text-transform:uppercase;
+  text-shadow:0 1px 2px #000;cursor:pointer;padding:0;display:grid;place-items:center;animation:tvzp 1.4s ease-in-out infinite}
+.tvz:hover,.tvz:focus-visible{background:rgba(255,209,102,.45);outline:none}
+@keyframes tvzp{50%{box-shadow:0 0 0 4px rgba(255,209,102,.25)}}
+@media (prefers-reduced-motion:reduce){.tvz{animation:none}}
+#sMatch{position:relative}
+html.lockmatch,html.lockmatch body{overflow:hidden;overscroll-behavior:none;height:100%}
+.screen{overscroll-behavior:contain}
+#sMatch .mombox{max-height:52dvh}
+#sMatch .mombox{flex:0 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain}
+.backtop{position:absolute;left:50%;transform:translateX(-50%);bottom:76px;z-index:20;background:var(--gold);color:var(--onGold);border:0;border-radius:999px;padding:10px 18px;font:800 1rem var(--cond);letter-spacing:.04em;box-shadow:0 8px 22px rgba(0,0,0,.45);cursor:pointer}
+@media (prefers-reduced-motion:no-preference){#sMatch .tv{animation:tvin .28s ease-out}@keyframes tvin{from{opacity:0;transform:scale(.97)}}}
+.lbPlayers{display:flex;flex-direction:column;gap:6px;width:100%;text-align:left}
+.lbP{display:flex;align-items:center;gap:10px;background:var(--turf3);border:1px solid var(--lineC);border-radius:10px;padding:9px 12px;font-weight:700}
+.lbP.off{opacity:.5;font-weight:400}
+.watchBtn{margin:4px 10px 10px;width:calc(100% - 20px);padding:9px;font-size:1rem}
+.thPick{display:flex;flex-direction:column;gap:8px;width:100%}.thPick .chips{gap:5px}.thPick .chip{padding:6px 10px;font-size:.88rem}
+.tmPick{display:flex;flex-direction:column;gap:8px;width:100%}.tmPick .chips{gap:5px;flex-wrap:nowrap}.tmPick .chip{flex:1 1 auto;padding:7px 4px;white-space:nowrap;font-size:.9rem;text-align:center}#lbTm .chips{justify-content:center}
+.lbAvs{display:flex;flex-wrap:wrap;justify-content:center;gap:12px 14px;width:100%}
+.lbAv{display:flex;flex-direction:column;align-items:center;gap:5px;width:70px;position:relative}.lbAv .nm{font:600 .8rem var(--body);text-align:center;max-width:74px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lbAv .c{width:56px;height:56px;border-radius:50%;display:grid;place-items:center;font:800 1.3rem var(--body);color:#0a0d12;position:relative;background:var(--turf3)}
+.lbAv.off .c{background:transparent;border:2px dashed var(--lineC);color:var(--muted)}.lbAv.off .nm{color:var(--muted)}
+.lbAv .ok{position:absolute;right:-3px;bottom:-3px;width:20px;height:20px;border-radius:50%;background:var(--gold);color:var(--onGold);display:grid;place-items:center;font:800 .7rem var(--body);border:2px solid var(--turf)}
+.lbAv .ok.bt{background:var(--turf3);font-size:.7rem}.lbAv .blv{font-size:.7rem;color:var(--muted)}.lbAv .bx{position:absolute;top:-6px;right:0;margin:0;background:var(--turf3);border-radius:50%;width:22px;height:22px;padding:0;font-size:.8rem}
+.lbP .bx{margin-left:auto;border:0;background:transparent;color:var(--muted);font:700 1rem var(--cond);cursor:pointer;padding:2px 6px}
+.lbP .blv{color:var(--muted);font-weight:400;font-size:.85em}
+.sbar{flex:none;display:grid;grid-template-columns:1fr auto 1fr auto;align-items:stretch;border-radius:12px;overflow:hidden;background:#050d09;border:1px solid var(--lineC);font-family:var(--cond);font-weight:700;box-shadow:0 6px 18px rgba(0,0,0,.35)}
+.sbar .bt{padding:10px 12px;font-size:1.15rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;align-self:center}
+.sbar .bt.r{text-align:right}
+.sbar .bt.rc2::before{box-shadow:.22em 0 0 -.02em #e5251b,0 0 0 1px rgba(0,0,0,.35);margin-right:.6em}
+.feed li.yel{background:rgba(255,209,102,.10)}
+.feed li.yel .tx::before,.feed li.red .tx::before{content:"";display:inline-block;width:.55em;height:.78em;border-radius:2px;margin-right:.4em;vertical-align:-.08em;background:#ffd23f;transform:rotate(-6deg)}
+.feed li.red .tx::before{background:#e5251b}
+.sbar .bt.rc::before{content:"";display:inline-block;width:.52em;height:.74em;background:#e5251b;border-radius:2px;margin-right:.35em;vertical-align:-.06em;transform:rotate(-7deg);box-shadow:0 0 0 1px rgba(0,0,0,.35),0 2px 6px rgba(229,37,27,.55);animation:rcIn .5s ease-out}
+@keyframes rcIn{0%{transform:scale(2.4) rotate(-20deg);opacity:0}100%{transform:rotate(-7deg);opacity:1}}
+.sbar b{background:#eef6ef;color:#0d2419;padding:6px 14px;font-family:var(--display);font-weight:900;font-size:1.6rem;line-height:1.2;font-variant-numeric:tabular-nums;display:flex;align-items:center}
+.sbar .bm{background:var(--gold);color:var(--onGold);padding:0 12px;font-size:1.05rem;display:flex;align-items:center;font-variant-numeric:tabular-nums;white-space:nowrap}
+#sCap #capPitch{flex:1;min-height:0;display:flex;justify-content:center}
+#capPitch.hasBench{flex-direction:column;align-items:center;gap:6px}#capPitch.hasBench .pitch{height:calc(100% - 50px)!important}
+#sCap #capPitch .pitch{height:100%;width:auto;max-width:100%;aspect-ratio:5/6;margin:0 auto}
+@media (max-height:720px){
+  #sDraft #dToast,#sDraft #dHint{display:none!important}
+  #sDraft .rule{padding:8px 12px}#sDraft .rule .lbl{display:none}
+  #dPeek{padding:8px}
+  .pitchbox .slot .chm b,#capPitch .slot .chm b{width:4px;height:4px}
+  .pitchbox .slot .nm2,#capPitch .slot .nm2{font-size:.62rem}
+  .hero{padding-top:8px;gap:8px}.hero h1{font-size:clamp(2.6rem,13vw,3.4rem)}.facts{display:none}
+  .mode{padding:10px 12px}.mode .ic{width:38px;height:38px}.mode b{font-size:1.15rem}.modes{gap:8px}
+  .pitchbox .disc,#capPitch .disc{width:36px;height:36px;font-size:.82rem}
+  .pitchbox .slot .nm2,#capPitch .slot .nm2{font-size:.72rem}
+  .screen{gap:10px}
+}
+
+
+/* ---- estrutura nova: separadores em baixo, página principal, perfil ---- */
+.navscr{padding-bottom:96px}
+.tabbar{position:fixed;left:50%;bottom:max(14px,env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:40;display:flex;gap:4px;padding:6px;border-radius:999px;
+  background:rgba(28,35,48,.92);border:1px solid var(--lineC);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);box-shadow:0 10px 30px rgba(0,0,0,.45)}
+.tabbar button{display:flex;align-items:center;gap:7px;border:0;background:transparent;color:var(--muted);font:700 .92rem var(--body);padding:10px 16px;border-radius:999px;cursor:pointer}
+.tabbar button.on{background:var(--gold);color:var(--onGold)}
+.hiTop{display:flex;align-items:center;gap:12px;padding-top:4px}.hiTop h1{flex:1;font-size:1.75rem}
+.topBack{width:40px;height:40px;border-radius:50%;border:0;background:var(--card);color:var(--chalk);display:grid;place-items:center;cursor:pointer;flex:none}
+.avBtn{width:42px;height:42px;border-radius:50%;border:0;background:var(--home);color:#fff;font:800 1.05rem var(--body);cursor:pointer;flex:none}
+.avBig{width:58px;height:58px;border-radius:50%;background:var(--home);color:#fff;display:grid;place-items:center;font:800 1.5rem var(--body);flex:none}
+.contCard{display:flex;align-items:center;gap:12px;width:100%;text-align:left;border:1px solid var(--lineC);border-radius:22px;padding:12px 14px;color:var(--chalk);cursor:pointer;
+  background:linear-gradient(135deg,#1e3a2a 0%,#141922 55%,#1b2740 100%)}
+.contCard .ct{flex:1;min-width:0}.contCard b{display:block;font:700 .98rem var(--body)}.contCard small{color:var(--muted);font-size:.82rem}
+.contCard .go{background:var(--gold);color:var(--onGold);border-radius:12px;padding:9px 13px;font:800 .9rem var(--body)}
+.crest{display:inline-grid;flex:none}
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.tile{border-radius:24px;padding:16px;min-height:140px;display:flex;flex-direction:column;justify-content:space-between;align-items:flex-start;text-align:left;background:var(--card);border:1px solid var(--lineC);color:var(--chalk);cursor:pointer;font-family:var(--body)}
+.tile.hi{background:linear-gradient(150deg,#d6ff6a,#9fe41f);color:var(--onGold);border:0}
+.tile b{display:block;font:800 1.15rem var(--body);letter-spacing:-.01em}.tile small{display:block;font:600 .8rem var(--body);opacity:.75;margin-top:2px}
+.tile .ic{width:40px;height:40px;border-radius:14px;background:rgba(0,0,0,.12);display:grid;place-items:center}.tile:not(.hi) .ic{background:var(--turf3);color:var(--gold)}
+.tile:active{transform:scale(.98)}
+.list{background:var(--card);border:1px solid var(--lineC);border-radius:20px;overflow:hidden;display:flex;flex-direction:column}
+.li{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;border:0;border-top:1px solid var(--lineC);background:transparent;color:var(--chalk);font:600 .95rem var(--body);text-align:left;cursor:pointer;width:100%}
+.li:first-child{border-top:0}.li .v{color:var(--muted);display:flex;gap:4px;align-items:center;font-weight:600;min-width:0;text-align:right}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+#sMe .ver{margin-top:auto}#sStart .ver{margin-top:0}
+
+/* ---- página inicial (opção 2) ---- */
+.hero2{position:relative;padding:22px 2px 6px;isolation:isolate;overflow:hidden;margin:0 -18px;padding-left:20px;padding-right:20px}.hero2 .pitchbg{position:absolute;left:0;right:0;bottom:-60px;width:100%;z-index:-1;opacity:.35}
+.kick2{display:inline-block;background:rgba(198,255,61,.12);color:var(--gold);border:1px solid rgba(198,255,61,.35);border-radius:999px;padding:5px 12px;font:700 .75rem var(--body);letter-spacing:.08em;text-transform:uppercase}
+.logo2{font:900 clamp(2.9rem,14vw,3.7rem)/.88 var(--display);text-transform:uppercase;margin-top:12px;letter-spacing:.01em}.logo2 em{color:var(--gold);font-style:normal;display:block}
+.grid4{display:grid;grid-template-columns:1fr 1fr;grid-auto-rows:1fr;gap:12px;flex:1 1 auto;min-height:300px;max-height:540px}
+.grid4 .big{position:relative;z-index:1;border-radius:24px;padding:18px;min-height:140px;display:flex;flex-direction:column;justify-content:space-between;align-items:flex-start;text-align:left;background:var(--card);border:1px solid var(--lineC);color:var(--chalk);cursor:pointer;font-family:var(--body)}
+.grid4 .big.hi{background:linear-gradient(150deg,#d6ff6a,#9fe41f);color:var(--onGold);border:0}.grid4 .big.lgc{background:linear-gradient(135deg,#1e3a2a,#141922 60%,#1b2740)}
+.grid4 .big .ic{width:46px;height:46px;border-radius:15px;background:var(--turf3);color:var(--gold);display:grid;place-items:center}.grid4 .big.hi .ic{background:rgba(0,0,0,.12);color:var(--onGold)}
+.grid4 .big b{display:block;font:800 1.25rem var(--body);letter-spacing:-.01em}.grid4 .big small{display:block;font:500 .8rem var(--body);opacity:.72;margin-top:2px}.grid4 .big:active{transform:scale(.98)}
+.mini2{display:flex;justify-content:center;align-items:center;gap:10px;flex-wrap:wrap;color:var(--muted)}.mini2 button{border:0;background:none;color:var(--muted);font:600 .92rem var(--body);cursor:pointer;padding:8px 2px}
+.meOpts{display:flex;flex-direction:column;gap:8px}.meOpts .toggle{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 14px;background:var(--card);border:1px solid var(--lineC);border-radius:14px}.meOpts>div{background:var(--card);border:1px solid var(--lineC);border-radius:14px;padding:12px 14px!important}.meOpts .chip{padding:7px 12px}
+.wTips{display:flex;flex-direction:column;gap:10px}.wTip{display:flex;gap:12px;align-items:flex-start;background:var(--card);border:1px solid var(--lineC);border-radius:18px;padding:12px 14px}
+.wTip .n{width:28px;height:28px;border-radius:50%;background:var(--gold);color:var(--onGold);display:grid;place-items:center;font:800 .9rem var(--body);flex:none}.wTip b{display:block;font:700 .98rem var(--body)}.wTip small{display:block;color:var(--muted);font-size:.85rem;margin-top:2px;line-height:1.35}
+.seg2{display:grid;grid-template-columns:1fr 1fr;background:var(--card);border:1px solid var(--lineC);border-radius:16px;padding:4px;gap:4px}
+.seg2 button{border:0;background:transparent;color:var(--muted);font:700 .95rem var(--body);padding:11px;border-radius:12px;cursor:pointer}.seg2 button[aria-pressed=true]{background:var(--gold);color:var(--onGold)}
+#sStart{gap:14px}
+
+/* ecrãs de dentro no estilo B: texto normal (sem maiúsculas), Inter, cartões arredondados */
+.teamhead .t,.pcN b,.pcV,.momres .rt3,.pickInfo b,.rteam b,.rwin,.mvp2 .n,.mvp .n,.lv b,.askRule,.seaChamp,.mode b{font-family:var(--body)!important;font-weight:800!important;text-transform:none!important;letter-spacing:-.01em!important}
+.teamhead .t{font-size:1.35rem}.rwin{font-size:1.3rem}.mvp2 .n{font-size:1.35rem}.pcN b,.pickInfo b{font-size:1.25rem}.momres .rt3{font-size:1.1rem;line-height:1.25}.askRule{font-size:1.1rem;line-height:1.2}
+.stat .k,.srow .k,.rscore .pens,.sctitle{font-family:var(--body)!important;text-transform:none!important;letter-spacing:0!important;font-weight:600!important}
+.rule{background:linear-gradient(150deg,#d6ff6a,#9fe41f)!important;color:var(--onGold)!important;border:0!important;border-radius:22px!important}
+.rule .lbl{color:rgba(10,13,18,.65)!important}.rule .r{font-family:var(--body)!important;font-weight:800!important;text-transform:none!important;letter-spacing:-.015em!important;font-size:1.55rem!important;line-height:1.12!important}
+.mombox,.momres,#momBox{border-radius:22px}
+.sbar{border-radius:16px}
+/* ===== Tema "Estádio": escuro, cartões arredondados, verde-lima ===== */
+:root{
+  --turf:#0a0d12; --turf2:#10151d; --turf3:#1c2330; --card:#141922; --chalk:#f2f5f9; --muted:#8a96a8; --lineC:#262f3d;
+  --gold:#c6ff3d; --onGold:#0a0d12; --body:"Inter",system-ui,-apple-system,"Segoe UI",sans-serif; --cond:"Inter",system-ui,sans-serif;
+}
+body{background:radial-gradient(120% 420px at 50% -80px,#173023 0%,var(--turf) 70%) fixed,var(--turf);font-family:var(--body);-webkit-font-smoothing:antialiased}
+h1{font-family:var(--body);font-weight:800;text-transform:none;letter-spacing:-.02em;line-height:1.05}
+h2{font-family:var(--body);font-weight:800;text-transform:none;letter-spacing:-.02em;font-size:1.5rem;line-height:1.15}
+.lbl{font-family:var(--body);font-weight:600;font-size:.8rem;letter-spacing:0;text-transform:none;color:var(--muted)}
+.panel{background:var(--card);border:1px solid var(--lineC);border-radius:22px}
+.btn{font-family:var(--body);font-weight:800;font-size:1.05rem;text-transform:none;letter-spacing:0;border-radius:16px;padding:15px;background:var(--gold);color:var(--onGold)}
+.btn.ghost{background:var(--turf3);border:1px solid transparent;color:var(--chalk);font-weight:700}
+.chip{background:var(--card);border:1px solid var(--lineC);font-family:var(--body);font-weight:600;font-size:.92rem;border-radius:999px}
+.chip[aria-pressed=true]{background:var(--chalk);border-color:var(--chalk);color:var(--turf)}
+input[type=text],input[type=search]{background:var(--card);border-color:var(--lineC);border-radius:14px}
+.sheetIn{background:#11161e;border-top:1px solid var(--lineC);border-radius:26px 26px 0 0}
+.toggle{background:var(--card);border-color:var(--lineC);border-radius:14px}
+.coach,.pl,.mode{background:var(--card);border-color:var(--lineC)}
+.who{font-family:var(--body);font-weight:800;text-transform:none;letter-spacing:-.01em}
+.msg.ok{color:var(--gold)}
+
+/* ---- draft arrumado (05/11): campo que cabe sempre, cabeçalho numa linha, avisos legíveis ---- */
+.pitchbox .pitch,#capPitch .pitch{container-type:size}
+.pitchbox .slot,#capPitch .slot{--d:clamp(22px,calc(20cqh - 24px),46px);position:relative;gap:2px!important;width:min(76px,24cqw)}
+.pitchbox .disc,#capPitch .disc{width:var(--d)!important;height:var(--d)!important;font-size:max(.58rem,calc(var(--d)*.3))!important}
+.pitchbox .slot .rt2,#capPitch .slot .rt2{position:absolute;top:-4px;left:calc(50% + var(--d)*.22);font-size:max(.62rem,calc(var(--d)*.3))!important;background:#0a0d12;border:1px solid rgba(198,255,61,.5);border-radius:7px;padding:1px 4px 0;line-height:1.05;z-index:2}
+.pitchbox .slot .nm2,#capPitch .slot .nm2{font-size:max(.6rem,min(.78rem,calc(var(--d)*.27)))!important;max-width:100%;padding:1px 4px}
+.pitchbox .slot .chm,#capPitch .slot .chm{margin-top:0;gap:3px}.pitchbox .slot .chm b,#capPitch .slot .chm b{width:max(3px,calc(var(--d)*.11));height:max(3px,calc(var(--d)*.11))}
+.pitchbox .pitch{padding:2px!important}
+.pitchbox.hasBench .pitch,#capPitch.hasBench .pitch{height:calc(100% - 46px)!important}
+.bench{gap:6px;padding:5px 8px;flex-wrap:nowrap}
+.bench .slot.bslot{flex:1 1 0;min-width:0;justify-content:center;--d:28px!important}.pitchbox .bench .disc{width:28px!important;height:28px!important;font-size:.6rem!important}
+.bench .slot .nm2{max-width:none;min-width:0;flex:0 1 auto}.bench .slot .rt2{position:static!important;flex:none}
+#sDraft .topbar{flex-wrap:nowrap;align-items:center;min-height:44px}
+#sDraft .topbar .dl{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+#sDraft .topbar .dl .ln{display:flex;align-items:center;gap:8px;min-width:0}
+#dWho{order:0;flex:none!important;font-size:1.3rem!important}
+#dWho .wait{font:600 .85rem var(--body);color:var(--muted);margin-left:2px;white-space:nowrap}
+.flagbtn{padding:1px 8px!important;font-size:.7rem!important;opacity:.8}
+#sDraft .toast{white-space:normal!important;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-size:.86rem!important;line-height:1.3;padding:7px 12px!important}
+#dWait{display:none!important}
+#sDraft #dRound{flex:0 1 auto}
+.simAsk{display:flex;flex-direction:column;gap:10px;background:rgba(198,255,61,.08);border:1px solid rgba(198,255,61,.45);border-radius:18px;padding:12px 14px;font-weight:600;flex:none}
+#simBtn{flex:none}
+</style>
+
+<div class="app">
+  <!-- 1. INÍCIO -->
+  <div class="screen" id="sStart">
+    <div class="hero2"><svg class="pitchbg" viewBox="0 0 400 260" aria-hidden="true" fill="none" stroke="rgba(238,246,239,.25)" stroke-width="2"><path d="M20 250 L60 30 H340 L380 250 Z"/><path d="M118 30 L112 70 H288 L282 30"/><path d="M200 250 A60 40 0 0 1 200 170"/></svg>
+      <span class="kick2">Futebol entre amigos</span><div class="logo2">Duelo de<em>Onzes</em></div></div>
+    <button class="contCard" id="resumeBtn" type="button" hidden><span class="crest" id="contCrest"></span><span class="ct"><b id="resumeTxt">Continuar o jogo</b><small>Jogo online a meio</small></span><span class="go">Voltar</span></button>
+    <div class="grid4">
+      <button class="big" id="cardQuick" type="button"><span class="ic"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2L4 14h7l-1 8 9-12h-7z"/></svg></span><span><b>Jogo rápido</b><small>Amigo ou bot, aqui</small></span></button>
+      <button class="big" id="cardOnline" type="button"><span class="ic"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="4" width="8" height="15" rx="2"/><rect x="13.5" y="4" width="8" height="15" rx="2"/><path d="M8 11.5h8"/></svg></span><span><b>Online</b><small>Cada um no seu telemóvel</small></span></button>
+      <button class="big" id="cardTour" type="button"><span class="ic"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M7 6H4v2a3 3 0 0 0 3 3M17 6h3v2a3 3 0 0 1-3 3M12 14v4M8 21h8"/></svg></span><span><b>Torneio</b><small>4 ou 8 treinadores</small></span></button>
+      <button class="big lgc" id="cardLiga" type="button"><span class="ic"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 20h18M5 20V9l7-5 7 5v11"/><path d="M9 20v-6h6v6"/></svg></span><span><b>Liga</b><small id="cardLigaTx">Épocas com draft e mercado</small></span></button>
+    </div>
+    <div class="mini2"><button type="button" id="goMe">Perfil e definições</button><span>·</span><button type="button" data-sheet="shHow">Como jogar</button><span>·</span><button type="button" id="langBtn" data-noi18n>🌐 English</button></div>
+    <p class="ver" id="verTag">versão 09/11 · 12h45</p><p class="ver">Dados: Wikidata e Wikipédia (CC BY-SA)</p><p class="ver"><a href="privacidade.html" style="color:inherit">Privacidade</a> · <a href="termos.html" style="color:inherit">Termos</a></p>
+    <div hidden><button id="goStart"></button><button id="botBtn"></button><button id="onlineBtn"></button><button id="tourBtn"></button><button id="lgBtn"></button><button id="histBtn"></button><button id="hiAv"></button><span id="hiName"></span></div>
+  </div>
+  <div class="screen" id="sWelcome" hidden>
+    <div class="hero2" style="padding-top:30px"><span class="kick2">Bem-vindo</span><div class="logo2">Duelo de<em>Onzes</em></div></div>
+    <label class="field" for="wName"><span class="lbl">Como te chamas? É o nome que os amigos vão ver (e o da liga).</span><input type="text" id="wName" maxlength="16" autocomplete="off" placeholder="O teu nome"></label>
+    <div class="wTips">
+      <div class="wTip"><span class="n">1</span><div><b>Monta o teu onze</b><small>Em cada ronda há uma regra nova ("Jogou no Benfica", "Canhoto"…). Escreve um jogador que a cumpra.</small></div></div>
+      <div class="wTip"><span class="n">2</span><div><b>Os golos decides tu</b><small>Nos lances de perigo, quem ataca e quem defende escolhem às escondidas. Se o defesa não adivinhar, é golo.</small></div></div>
+      <div class="wTip"><span class="n">3</span><div><b>Joga com os amigos</b><small>No mesmo telemóvel, online, em torneios ou numa liga com épocas, draft e mercado.</small></div></div>
+    </div>
+    <span class="msg bad" id="wMsg"></span>
+    <div class="grow"></div>
+    <button class="btn" id="wGo" type="button">Vamos jogar</button>
+  </div>
+  <div class="screen" id="sQuick" hidden>
+    <div class="hiTop"><button class="topBack" type="button" data-home aria-label="Voltar"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button><h1>Jogo rápido</h1></div>
+    <span class="lbl">Contra</span>
+    <div class="seg2" id="qVs"><button type="button" data-v="amigo">👥 Um amigo</button><button type="button" data-v="bot">🤖 O bot</button></div>
+    <div class="panel" id="qAmigo" style="display:flex;flex-direction:column;gap:10px">
+      <label class="field" for="q0"><span class="lbl">Treinador 1</span><input type="text" id="q0" maxlength="16" autocomplete="off"></label>
+      <label class="field" for="q1"><span class="lbl">Treinador 2</span><input type="text" id="q1" maxlength="16" autocomplete="off"></label></div>
+    <div class="panel" id="qBot" hidden style="display:flex;flex-direction:column;gap:10px">
+      <label class="field" for="qb"><span class="lbl">O teu nome</span><input type="text" id="qb" maxlength="16" autocomplete="off"></label>
+      <span class="lbl">Nível do bot</span><div class="chips" id="qLv"><button class="chip" type="button" data-lv="1">Fácil</button><button class="chip" type="button" data-lv="2">Médio</button><button class="chip" type="button" data-lv="3">Lenda</button></div></div>
+    <div class="panel" style="display:flex;flex-direction:column;gap:12px"><div class="thPick"><span class="lbl">Tipo de draft</span><div class="chips thChips"><button class="chip" data-th="">Normal</button><button class="chip" data-th="pt">Só portugueses</button><button class="chip" data-th="lendas">Só lendas</button><button class="chip" data-th="novos">Geração atual</button><button class="chip" data-th="ligapt">Jogaram em Portugal</button><button class="chip" data-th="sam">Sul-americanos</button><button class="chip" data-th="craques">Só craques</button></div></div><div class="tmPick"><span class="lbl">Tempo para cada escolha</span><div class="chips tmChips"><button class="chip" data-s="0">Sem tempo</button><button class="chip" data-s="30">30 s</button><button class="chip" data-s="45">45 s</button><button class="chip" data-s="60">60 s</button><button class="chip" data-s="90">90 s</button></div></div></div>
+    <div class="grow"></div>
+    <button class="btn" id="qGo" type="button">Começar</button>
+  </div>
+
+  <div class="screen" id="sMe" hidden>
+    <div class="hiTop"><button class="topBack" type="button" data-home aria-label="Voltar"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button><h1>O meu perfil</h1></div>
+    <div class="panel" style="display:flex;align-items:center;gap:14px"><span class="avBig" id="meAv">?</span>
+      <label class="field" for="meName" style="flex:1"><span class="lbl">O teu nome (igual em todos os jogos e na liga)</span><input type="text" id="meName" maxlength="16" autocomplete="off"></label></div>
+    <span class="lbl">Definições</span><div id="meOpts" class="meOpts"></div>
+    <div class="list">
+      <button class="li" type="button" id="meHist"><span>📜 Histórico de jogos</span><span class="v"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg></span></button>
+      <button class="li" type="button" data-sheet="shOpts" hidden><span>⚙️ Definições</span><span class="v"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg></span></button>
+      <button class="li" type="button" id="meLang"><span>🌐 Língua / Language</span><span class="v" id="meLangV" data-noi18n>Português</span></button>
+      <button class="li" type="button" data-sheet="shHow"><span>📖 Como jogar</span><span class="v"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg></span></button>
+      <button class="li" type="button" id="meInstall" hidden><span>📲 Instalar a app</span><span class="v"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg></span></button>
+    </div>
+    <p class="ver" id="meVer"></p>
+  </div>
+
+  <!-- ONLINE -->
+  <div class="screen" id="sLobby" hidden>
+    <div class="hiTop"><button class="topBack" type="button" data-back="lbBack" aria-label="Voltar"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button><h1>Jogo online</h1></div>
+    <div class="panel" id="lbChoose" style="display:flex;flex-direction:column;gap:12px">
+      <label class="field" for="lbName"><span class="lbl">O teu nome</span><input type="text" id="lbName" maxlength="16" autocomplete="off"></label>
+      <button class="btn" id="lbCreate">Criar duelo (2)</button>
+      <div class="row2"><button class="btn ghost" id="lbCreate4">Torneio de 4</button><button class="btn ghost" id="lbCreate8">Torneio de 8</button></div>
+      <span class="lbl" style="text-align:center">ou entra no jogo de um amigo</span>
+      <div class="askrow"><input type="text" id="lbCode" maxlength="4" placeholder="CÓDIGO" autocomplete="off" autocapitalize="characters" style="text-transform:uppercase;letter-spacing:.3em;font-weight:700"><button class="btn go" id="lbJoin">Entrar</button></div>
+      <div class="msg bad" id="lbErr"></div>
+    </div>
+    <div class="panel" id="lbWait" hidden style="display:flex;flex-direction:column;gap:10px;align-items:center;text-align:center">
+      <span class="lbl">Código do jogo</span><div class="code" id="lbCodeShow"></div><p class="muted" id="lbStatus"></p><div id="lbPlayers" class="lbPlayers" hidden></div>
+      <div id="lbOpts" hidden style="display:flex;flex-direction:column;gap:10px;width:100%"><div class="thPick"><span class="lbl">Tipo de draft</span><div class="chips thChips"><button class="chip" data-th="">Normal</button><button class="chip" data-th="pt">Só portugueses</button><button class="chip" data-th="lendas">Só lendas</button><button class="chip" data-th="novos">Geração atual</button><button class="chip" data-th="ligapt">Jogaram em Portugal</button><button class="chip" data-th="sam">Sul-americanos</button><button class="chip" data-th="craques">Só craques</button></div></div><div class="tmPick" id="lbTm" style="align-items:center"><span class="lbl">Tempo para cada escolha</span><div class="chips tmChips"><button class="chip" data-s="0">Sem tempo</button><button class="chip" data-s="30">30 s</button><button class="chip" data-s="45">45 s</button><button class="chip" data-s="60">60 s</button><button class="chip" data-s="90">90 s</button></div></div></div><p class="muted" id="lbTmInfo" hidden style="font-size:.9rem;margin:0"></p>
+      <div id="lbBots" hidden style="display:flex;flex-direction:column;gap:8px;align-items:center;width:100%"><span class="lbl">Faltam jogadores? Junta bots</span>
+        <div class="chips" id="lbBotLv"><button class="chip" data-lv="1">Fácil</button><button class="chip" data-lv="2">Médio</button><button class="chip" data-lv="3">Lenda</button></div>
+        <button class="btn ghost" id="lbAddBot">+ Adicionar bot</button></div><button class="btn" id="lbStart" hidden>Começar o torneio</button><button class="btn ghost" id="lbShare" hidden>Partilhar link do jogo</button>
+    </div>
+    <p class="muted" id="lbNote">Cada um usa o seu telemóvel. Quem cria o jogo recebe um código de 4 letras para dar aos amigos.</p>
+    <div class="grow"></div>
+    <button class="btn ghost" id="lbBack" hidden>Sair</button>
+  </div>
+
+  <!-- TORNEIO -->
+  <div class="screen" id="sTour" hidden>
+    <header style="display:flex;flex-direction:column;gap:8px"><div class="hiTop"><button class="topBack" type="button" data-back="tBack" aria-label="Voltar"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button><h1>Torneio</h1></div>
+      <p class="muted">Cada treinador monta o seu onze à vez, com as mesmas regras em cada ronda. Depois há eliminatórias até à final. O sorteio do quadro é feito no início.</p></header>
+    <div class="chips" id="tSize"><button class="chip" data-n="4">4 treinadores</button><button class="chip" data-n="8">8 treinadores</button></div>
+    <div class="panel" id="tNames" style="display:flex;flex-direction:column;gap:12px"></div>
+    <div class="panel" id="tBotLv" style="display:flex;flex-direction:column;gap:8px"><span class="lbl">Nível dos bots</span><div class="chips" id="tLv"><button class="chip" data-lv="1">Fácil</button><button class="chip" data-lv="2">Médio</button><button class="chip" data-lv="3">Lenda</button></div></div>
+    <div class="panel"><div class="thPick"><span class="lbl">Tipo de draft</span><div class="chips thChips"><button class="chip" data-th="">Normal</button><button class="chip" data-th="pt">Só portugueses</button><button class="chip" data-th="lendas">Só lendas</button><button class="chip" data-th="novos">Geração atual</button><button class="chip" data-th="ligapt">Jogaram em Portugal</button><button class="chip" data-th="sam">Sul-americanos</button><button class="chip" data-th="craques">Só craques</button></div></div><div class="tmPick"><span class="lbl">Tempo para cada escolha</span><div class="chips tmChips"><button class="chip" data-s="0">Sem tempo</button><button class="chip" data-s="30">30 s</button><button class="chip" data-s="45">45 s</button><button class="chip" data-s="60">60 s</button><button class="chip" data-s="90">90 s</button></div></div></div>
+    <div class="grow"></div>
+    <button class="btn" id="tGo">Começar o torneio</button>
+    <button class="btn ghost" id="tBack" hidden>Voltar</button>
+  </div>
+  <div class="screen" id="sSeason" hidden>
+    <div class="hiTop"><button class="topBack" type="button" data-home aria-label="Voltar"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button><h1 id="seaTitle">Liga</h1></div><p class="muted" id="seaStatus" style="margin:0"></p>
+    <div id="seaTop" style="display:flex;flex-direction:column;gap:8px"></div>
+    <div class="chips" id="seaTabs" hidden></div>
+    <span class="msg" id="seaMsg"></span>
+    <div id="seaBody" style="display:flex;flex-direction:column;gap:6px"></div>
+  </div>
+  <div class="screen" id="sBracket" hidden>
+    <h2 id="brTitle">Quadro do torneio</h2><p class="brPod" id="brPod" hidden></p>
+    <div id="brBox" style="display:flex;flex-direction:column;gap:16px"></div>
+    <div class="grow"></div>
+    <button class="btn" id="brPlay"></button>
+    <button class="btn ghost" id="brShare">📷 Partilhar o meu onze</button>
+    <button class="btn ghost" id="brNew" hidden>Novo jogo</button>
+  </div>
+
+  <!-- 2. TREINADOR -->
+  <div class="screen fit" id="sCoach" hidden>
+    <div class="topbar"><div class="who" id="cWho"></div><span class="lbl">Escolhe o treinador</span></div>
+    <div class="coaches scroll" id="coachList"></div>
+    <div class="panel" id="formBox" hidden style="display:flex;flex-direction:column;gap:10px">
+      <span class="lbl">Formação</span>
+      <div class="chips" id="forms"></div>
+      <p class="muted" id="tactDesc"></p>
+    </div>
+    <button class="btn" id="coachOk" disabled>Confirmar</button>
+  </div>
+
+  <!-- 3. ESCOLHAS -->
+  <div class="screen fit" id="sDraft" hidden>
+    <div class="topbar">
+      <div class="dl"><div class="ln"><span class="lbl" id="dRound"></span><button class="flagbtn" id="dReport" type="button" aria-label="Reportar um erro">⚑ Erro?</button></div>
+      <div class="who" id="dWho"></div></div>
+    </div>
+    <div class="rule"><span class="lbl" id="dRuleLbl">Regra desta ronda</span><div class="r" id="dRule"></div></div>
+    <div class="toast" id="dToast" hidden></div>
+    <div class="toast wait" id="dWait" hidden></div>
+    <div id="dPitch" class="pitchbox"></div>
+    <div class="dstr" id="dStr"></div>
+    <div class="askpage" id="askPage" hidden><div class="askIn">
+    <div class="askHead"><button class="xbtn" id="askClose" aria-label="Voltar ao campo">←</button><div class="t"><span class="lbl" id="dSlotLbl"></span><div class="askRule" id="askRule"></div></div></div>
+    <div class="panel ask" id="dAsk">
+      <div id="dRow" hidden>
+        <input type="search" id="dInput" placeholder="Escreve o nome do jogador" autocomplete="off" autocapitalize="words" enterkeyhint="search">
+      </div>
+      <div class="tries" id="dTries" hidden></div>
+      <div class="msg" id="dMsg"></div>
+      <div class="chips" id="dWhich"></div>
+      <div class="list" id="dSug"></div>
+      <div class="list" id="dList" hidden></div>
+      <div class="pick" id="dPick" hidden>
+        <div class="pickInfo" id="dPickInfo"></div>
+        <div class="row2"><button class="btn ghost" id="dUnpick">Mudar</button><button class="btn" id="dGo">Confirmar</button></div>
+      </div>
+      <button class="linkbtn" id="dGiveUp" hidden>Não sei, mete um júnior da formação</button>
+    </div>
+    </div></div>
+    <p class="muted" id="dHint" style="text-align:center;margin:0">Toca numa posição vaga para escolher o jogador</p>
+    <div class="pick" id="claimBox" hidden><div class="pickInfo" id="claimInfo"></div><div class="row2" id="claimBtns"></div></div>
+    <button class="btn ghost" id="dPeek"></button>
+  </div>
+
+  <!-- CAPITÃO -->
+  <div class="screen fit" id="sCap" hidden>
+    <div class="topbar"><div class="who" id="capWho"></div><span class="lbl">Escolhe o capitão</span></div>
+    <p class="muted" style="font-size:.92rem">O capitão ganha +4 de qualidade e puxa pela equipa toda. Toca num jogador.</p>
+    <div id="capPitch"></div>
+    <button class="btn" id="capOk" disabled>Confirmar capitão</button>
+  </div>
+
+  <!-- 4. ANTES DO JOGO -->
+  <div class="screen fit" id="sPre" hidden>
+    <span class="lbl">Fichas de jogo</span>
+    <div id="preTeams" style="display:flex;flex-direction:column;gap:12px;flex:1;min-height:0"></div>
+    <p class="muted" id="preNote"></p>
+    <button class="btn ghost" id="preShare">📷 Partilhar este onze</button>
+    <button class="btn" id="kickOff">Apito inicial</button>
+  </div>
+
+  <!-- 5. JOGO -->
+  <div class="screen fit" id="sMatch" hidden>
+    <div class="sbar"><span class="bt" id="bH"></span><b id="bS">0–0</b><span class="bt r" id="bA"></span><span class="bm" id="clock">0'</span></div>
+    <div class="tv" id="tv" hidden>
+      <canvas id="scCv" aria-hidden="true"></canvas>
+      <div class="lower" id="scLower" hidden><span id="scTitle"></span></div>
+      <div class="sccap off" id="scCap"></div>
+      <div class="tvzones" id="tvZones" hidden></div>
+    </div>
+    <div class="panel mombox" id="momBox" hidden>
+      <span class="lbl" id="momTitle"></span>
+      <p class="muted" id="momSub"></p>
+      <div id="momRows" style="display:flex;flex-direction:column;gap:12px"></div>
+      <div class="momres" id="momResult" hidden></div>
+      <button class="linkbtn" id="momKeep" hidden>Manter tudo igual</button>
+    </div>
+    <ul class="feed" id="feed"></ul>
+    <button class="backtop" id="backTop" hidden type="button">⬆ Voltar ao jogo</button>
+    <button class="btn ghost" id="skip">Saltar para o fim</button>
+    <div class="simAsk" id="simAsk" hidden><span id="simAskTx"></span><div class="row2"><button class="btn ghost" id="simNo" type="button">Recusar</button><button class="btn" id="simYes" type="button">Aceitar</button></div></div>
+    <button class="btn ghost" id="simBtn" type="button" hidden>⚡ Simular o resto do jogo</button>
+    <button class="btn" id="toResult" hidden>Ver análise</button>
+    <button class="btn ghost" id="specExit" hidden>Sair e voltar ao quadro</button>
+  </div>
+
+  <!-- 6. RESULTADO -->
+  <div class="screen" id="sResult" hidden>
+    <div class="rcard">
+      <div class="rteams">
+        <div class="rteam" id="rTH"><span class="crest" id="rCH"></span><b id="rH"></b><small id="rHc"></small></div>
+        <div class="rscore"><div class="sc" id="rS"></div><div class="pens" id="rP" hidden></div></div>
+        <div class="rteam" id="rTA"><span class="crest" id="rCA"></span><b id="rA"></b><small id="rAc"></small></div>
+      </div>
+      <div class="rwin" id="rTitle"></div>
+      <p class="muted" id="h2h" hidden style="text-align:center;margin:0;font-size:.92rem"></p>
+    </div>
+    <div class="panel mvp2"><div class="mvpR" id="mvpR"></div><div style="min-width:0"><span class="lbl">Homem do jogo</span><div class="n" id="mvp"></div><span class="muted" id="mvpWhy"></span></div></div>
+    <div class="panel"><span class="lbl">Estatísticas do jogo</span><div class="stats" id="stats"></div></div>
+    <div class="panel"><span class="lbl">Notas dos jogadores</span><div id="notes"></div></div>
+    <div class="panel"><span class="lbl">Força das equipas</span><div class="stats" id="stats2"></div></div>
+    <div id="postTeams" style="display:flex;flex-direction:column;gap:14px"></div>
+    <div class="panel" style="display:flex;flex-direction:column;gap:8px">
+      <button class="btn" id="shareImg">📷 Partilhar imagem do resultado</button>
+      <button class="btn ghost" id="shareBtn">Copiar resumo para o WhatsApp</button>
+      <span class="msg ok" id="shareMsg"></span>
+      <textarea id="shareTxt" hidden rows="8" style="width:100%;box-sizing:border-box;background:var(--turf3);color:var(--chalk);border:1px solid var(--lineC);border-radius:12px;padding:10px;font:inherit"></textarea>
+    </div>
+    <div class="ractions">
+      <div class="row2">
+        <button class="btn ghost" id="newGame">Novo jogo</button>
+        <button class="btn" id="rematch">Desforra</button>
+      </div>
+      <button class="btn" id="backBracket" hidden>Voltar ao quadro</button>
+      <button class="btn" id="toSeason" hidden>Voltar à época</button>
+    </div>
+  </div>
+</div>
+<div id="pickCard" hidden role="status"></div>
+<div id="tmPill" hidden aria-live="off"></div>
+<div id="netPill" hidden role="status">A religar aos outros telemóveis…</div>
+<div class="sheet" id="shNames" hidden><div class="sheetIn">
+    <div class="shHead"><h2>Quem joga?</h2><button class="xbtn" data-close aria-label="Fechar">✕</button></div>
+    <label class="field" for="n0"><span class="lbl" style="display:flex;align-items:center;gap:8px"><span class="dot" style="--c:var(--home)"></span>Treinador 1</span><input type="text" id="n0" maxlength="16" value="Rui" autocomplete="off"></label>
+    <label class="field" for="n1"><span class="lbl" style="display:flex;align-items:center;gap:8px"><span class="dot" style="--c:var(--away)"></span>Treinador 2</span><input type="text" id="n1" maxlength="16" value="Tiago" autocomplete="off"></label>
+<div class="thPick"><span class="lbl">Tipo de draft</span><div class="chips thChips"><button class="chip" data-th="">Normal</button><button class="chip" data-th="pt">Só portugueses</button><button class="chip" data-th="lendas">Só lendas</button><button class="chip" data-th="novos">Geração atual</button><button class="chip" data-th="ligapt">Jogaram em Portugal</button><button class="chip" data-th="sam">Sul-americanos</button><button class="chip" data-th="craques">Só craques</button></div></div><div class="tmPick"><span class="lbl">Tempo para cada escolha</span><div class="chips tmChips"><button class="chip" data-s="0">Sem tempo</button><button class="chip" data-s="30">30 s</button><button class="chip" data-s="45">45 s</button><button class="chip" data-s="60">60 s</button><button class="chip" data-s="90">90 s</button></div></div>
+    <button class="btn" id="goBtn">Começar</button>
+  </div></div>
+  <div class="sheet" id="shBot" hidden><div class="sheetIn">
+    <div class="shHead"><h2>Contra o bot</h2><button class="xbtn" data-close aria-label="Fechar">✕</button></div>
+    <label class="field" for="bName"><span class="lbl">O teu nome</span><input type="text" id="bName" maxlength="16" autocomplete="off"></label>
+    <span class="lbl">Nível do bot</span>
+    <div class="botLv" id="bLevel">
+      <button class="lv" data-lv="1"><b>Fácil</b><small>Escolhe jogadores medianos e às vezes engana-se</small></button>
+      <button class="lv" data-lv="2"><b>Médio</b><small>Escolhe bons jogadores, mas nem sempre o melhor</small></button>
+      <button class="lv" data-lv="3"><b>Lenda</b><small>Quase sempre o melhor disponível. Boa sorte.</small></button>
+    </div>
+    <p class="muted" id="bRec" style="font-size:.92rem"></p>
+    <div class="thPick"><span class="lbl">Tipo de draft</span><div class="chips thChips"><button class="chip" data-th="">Normal</button><button class="chip" data-th="pt">Só portugueses</button><button class="chip" data-th="lendas">Só lendas</button><button class="chip" data-th="novos">Geração atual</button><button class="chip" data-th="ligapt">Jogaram em Portugal</button><button class="chip" data-th="sam">Sul-americanos</button><button class="chip" data-th="craques">Só craques</button></div></div><div class="tmPick"><span class="lbl">Tempo para cada escolha</span><div class="chips tmChips"><button class="chip" data-s="0">Sem tempo</button><button class="chip" data-s="30">30 s</button><button class="chip" data-s="45">45 s</button><button class="chip" data-s="60">60 s</button><button class="chip" data-s="90">90 s</button></div></div>
+    <button class="btn" id="bGo">Começar</button>
+  </div></div>
+  <div class="sheet" id="shReport" hidden><div class="sheetIn">
+    <div class="shHead"><h2>Reportar um erro</h2><button class="xbtn" data-close aria-label="Fechar">✕</button></div>
+    <p class="muted" style="margin:0">Se o jogo disse que um jogador não cumpre a regra e cumpre (ou o contrário), toca no caso. Eu vejo a lista e corrijo.</p>
+    <div id="repList" style="display:flex;flex-direction:column;gap:8px"></div>
+    <label class="field" for="repTxt"><span class="lbl">Outro erro (escreve o que está mal)</span><textarea id="repTxt" rows="3" maxlength="300" style="width:100%;box-sizing:border-box;background:var(--turf3);color:var(--chalk);border:1px solid var(--lineC);border-radius:12px;padding:10px;font:inherit"></textarea></label>
+    <button class="btn" id="repSend">Enviar</button>
+    <span class="msg ok" id="repMsg"></span>
+  </div></div>
+  <div class="sheet" id="shOpts" hidden><div class="sheetIn">
+    <div class="shHead"><h2>Definições</h2><button class="xbtn" data-close aria-label="Fechar">✕</button></div>
+    <label class="toggle" for="listMode"><span>Modo fácil: mostrar a lista de jogadores possíveis</span><input type="checkbox" id="listMode"></label>
+    <label class="toggle" for="sndOn"><span>Som (apito e golos)</span><input type="checkbox" id="sndOn" checked></label>
+    <div style="display:flex;flex-direction:column;gap:8px;padding:6px 0"><span class="lbl">Tempo para cada escolha</span>
+      <div class="chips tmChips" id="tmChips"><button class="chip" data-s="0">Sem tempo</button><button class="chip" data-s="30">30 s</button><button class="chip" data-s="45">45 s</button><button class="chip" data-s="60">60 s</button><button class="chip" data-s="90">90 s</button></div>
+      <span class="muted" style="font-size:.85rem">Se o tempo acabar, entra um júnior da formação: primeiro para o banco e, se o banco estiver cheio, para um lugar vago do onze, à sorte. Online vale o tempo de quem cria o jogo.</span></div>
+    <label class="toggle" for="showR"><span>Mostrar a qualidade dos jogadores durante a escolha</span><input type="checkbox" id="showR"></label>
+    <div class="panel" id="repLocal" hidden style="display:flex;flex-direction:column;gap:8px"><span class="lbl">Erros reportados neste telemóvel</span><span class="muted" id="repLocalN"></span><button class="btn ghost" id="repCopy">Copiar para enviar ao Diogo</button><span class="msg ok" id="repCopyMsg"></span></div>
+  </div></div>
+  <div class="sheet" id="shChem" hidden><div class="sheetIn">
+    <div class="shHead"><h2>Química</h2><button class="xbtn" data-close aria-label="Fechar">✕</button></div>
+    <p>Cada jogador do teu onze ganha pontos de química, até <b>3</b>:</p>
+    <ul style="margin:0;padding-left:20px;line-height:1.6"><li><b>+1</b> por cada colega com quem passou pelo mesmo clube</li><li><b>+½</b> por cada colega do mesmo país (sem clube em comum)</li></ul>
+    <div class="chemLegend"><span class="chm"><b class="on"></b><b class="on"></b><b class="half"></b></span> Os losangos por baixo de cada jogador no campo mostram os pontos dele.</div>
+    <p>A equipa soma os pontos dos 11 jogadores, num máximo de <b>33</b>. Quanto maior a química, mais forte jogam todos os setores: até <b>+4</b> no ataque, meio-campo, defesa e baliza (o dobro com um treinador de "Espírito de família").</p>
+    <p class="muted">Fraca: menos de 7 · Razoável: 7 a 14 · Boa: 15 a 22 · Excelente: 23 ou mais.</p>
+  </div></div>
+  <div class="sheet" id="shHow" hidden><div class="sheetIn">
+    <div class="shHead"><h2>Como jogar</h2><button class="xbtn" data-close aria-label="Fechar">✕</button></div>
+    <ol style="margin:8px 0 0;padding-left:20px;line-height:1.55;display:flex;flex-direction:column;gap:4px">
+        <li>Cada um escolhe um <b>treinador</b>. É ele que define a <b>tática</b>.</li>
+        <li>Escolhem a <b>formação</b>. A preferida do treinador dá um pequeno bónus.</li>
+        <li>11 rondas: cada ronda tem uma regra, como "Jogou no FC Porto" ou "Brasileiro". Toca numa posição vaga do teu onze e <b>escreve o nome</b> de um jogador que cumpra a regra.</li>
+        <li>Em cada ronda começa a escolher um treinador diferente, à vez. Há um <b>tempo</b> para cada escolha (muda-se em Definições): se acabar, entra um júnior da formação.</li>
+        <li>Tens 3 tentativas. Se falhares, entra um <b>júnior da formação</b> (fraquinho).</li>
+        <li><b>Química:</b> cada jogador ganha +1 por colega com quem passou pelo mesmo clube e +½ por colega do mesmo país (até 3). A equipa vai até 33 e química alta dá até +4 em todos os setores.</li>
+        <li>No jogo, <b>os golos só acontecem nos lances em que vocês escolhem</b>: se quem defende não adivinhar, é golo; se adivinhar, não é.</li><li>Cada jogo tem <b>7 lances decisivos</b>. A equipa mais forte (rating, química, capitão e tática) fica com <b>4 ou 5</b> deles; se as forças forem iguais, desempata a química.</li><li><b>Liga e época:</b> em 🏆 Liga criam uma liga e começam uma época. Há um draft único com todos, depois uma 1.ª volta (jogam quando quiserem), um mercado de transferências (até 3 trocas, cada uma com uma regra nova) e a 2.ª volta. Vitória 3, empate 1. Um vermelho deixa o jogador de fora no jogo seguinte.</li><li>Ao criar o jogo podes escolher um <b>draft temático</b> (só portugueses, só lendas, geração atual…) e o <b>tempo</b> de cada escolha.</li>
+      </ol>
+  </div></div>
+  <div class="sheet" id="shGameOpts" hidden><div class="sheetIn">
+    <div class="shHead"><h2>Opções do jogo</h2><button class="xbtn" data-close aria-label="Fechar">✕</button></div>
+    <div class="thPick"><span class="lbl">Tipo de draft</span><div class="chips thChips"><button class="chip" data-th="">Normal</button><button class="chip" data-th="pt">Só portugueses</button><button class="chip" data-th="lendas">Só lendas</button><button class="chip" data-th="novos">Geração atual</button><button class="chip" data-th="ligapt">Jogaram em Portugal</button><button class="chip" data-th="sam">Sul-americanos</button><button class="chip" data-th="craques">Só craques</button></div></div><div class="tmPick"><span class="lbl">Tempo para cada escolha</span><div class="chips tmChips"><button class="chip" data-s="0">Sem tempo</button><button class="chip" data-s="30">30 s</button><button class="chip" data-s="45">45 s</button><button class="chip" data-s="60">60 s</button><button class="chip" data-s="90">90 s</button></div></div>
+    <button class="btn" data-close type="button">Feito</button>
+  </div></div>
+  <div class="sheet" id="shLeague" hidden><div class="sheetIn">
+    <div class="shHead"><h2>Liga dos amigos</h2><button class="xbtn" data-close aria-label="Fechar">✕</button></div>
+    <div id="lgNone" style="display:flex;flex-direction:column;gap:10px">
+      <p class="muted">Uma liga guarda os resultados de todos os vossos jogos (online, no mesmo telemóvel e torneios): classificação, títulos e confrontos diretos. Cria uma e partilha o código com os amigos.</p>
+      <label class="field" for="lgNewName"><span class="lbl">Nome da liga</span><input type="text" id="lgNewName" maxlength="30" placeholder="Liga do Balneário" autocomplete="off"></label>
+      <button class="btn" id="lgCreate">Criar liga</button>
+      <span class="lbl" style="text-align:center">ou entra numa liga de um amigo</span>
+      <div class="askrow"><input type="text" id="lgJoinCode" maxlength="5" placeholder="CÓDIGO" autocomplete="off" autocapitalize="characters" style="text-transform:uppercase;letter-spacing:.3em;font-weight:700"><button class="btn go" id="lgJoin">Entrar</button></div>
+    </div>
+    <div id="lgHas" hidden style="display:flex;flex-direction:column;gap:10px">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px"><b id="lgName" style="font-size:1.2rem"></b><span class="lbl">Código <b id="lgCodeShow" style="color:var(--gold);letter-spacing:.2em"></b></span></div>
+      <label class="toggle" for="lgOnChk"><span>Os jogos novos contam para esta liga</span><input type="checkbox" id="lgOnChk" checked></label>
+      <div class="chips" id="lgTabs"><button class="chip" data-t="tab">Classificação</button><button class="chip" data-t="h2h">Confrontos</button><button class="chip" data-t="last">Últimos jogos</button></div>
+      <div id="lgBody" style="display:flex;flex-direction:column;gap:6px"></div>
+      <button class="btn" id="lgSeason">📅 Época: calendário, jogos e mercado</button>
+      <div class="row2"><button class="btn ghost" id="lgCopy">Convidar amigos</button><button class="btn ghost" id="lgLeave">Sair da liga</button></div>
+    </div>
+    <span class="msg" id="lgMsg"></span>
+  </div></div>
+  <div class="sheet" id="shHist" hidden><div class="sheetIn">
+    <div class="shHead"><h2>Histórico</h2><button class="xbtn" data-close aria-label="Fechar">✕</button></div>
+    <div id="histPanel" style="display:flex;flex-direction:column;gap:8px"><div id="histList" style="display:flex;flex-direction:column;gap:6px"></div>
+    <button class="linkbtn" id="histClear">Apagar histórico</button></div>
+  </div></div>
+
+
+<canvas id="fx" hidden style="position:fixed;inset:0;pointer-events:none;z-index:50;width:100%;height:100%"></canvas>
+
+<script src="db-3154af54c2.js"></script>
+<script src="app-ae549602f8.js"></script>
+
+</html>

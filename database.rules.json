@@ -1,0 +1,96 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+
+    "idx": {
+      ".read": "auth != null",
+      ".indexOn": [".value"],
+      "$room": {
+        ".write": "auth != null && $room.matches(/^duelo-[a-z0-9-]{1,40}$/) && (newData.val() === now || (!newData.exists() && data.val() < now - 172800000))"
+      }
+    },
+
+    "rooms": {
+      "$room": {
+        ".read": "auth != null && $room.matches(/^duelo-[a-z0-9-]{1,40}$/)",
+        ".write": "auth != null && !newData.exists() && root.child('idx/' + $room).val() < now - 172800000",
+        "p": {
+          "$uid": {
+            ".write": "auth != null && auth.uid === $uid",
+            ".validate": "newData.hasChildren(['d', 't']) && newData.child('d').isString() && newData.child('d').val().length < 60000 && newData.child('t').val() === now",
+            "d": { ".validate": true },
+            "t": { ".validate": true },
+            "$other": { ".validate": false }
+          }
+        }
+      }
+    },
+
+    "leagues": {
+      "$c": {
+        ".read": "auth != null && $c.matches(/^[A-Za-z0-9]{4,8}$/)",
+        "g": {
+          "$id": {
+            ".write": "auth != null && newData.exists() && (!data.exists() || data.child('d').val() === newData.child('d').val())",
+            ".validate": "$id.matches(/^[A-Za-z0-9-]{1,80}$/) && newData.hasChildren(['d', 't']) && newData.child('d').isString() && newData.child('d').val().length < 20000",
+            "d": { ".validate": true },
+            "t": { ".validate": "newData.val() === now" },
+            "$other": { ".validate": false }
+          }
+        },
+        "cur": {
+          ".write": "auth != null",
+          ".validate": "!newData.exists() || (newData.child('d').isString() && newData.child('d').val().length < 4000)",
+          "d": { ".validate": true },
+          "$other": { ".validate": false }
+        },
+        "s": {
+          "$sid": {
+            ".validate": "$sid.matches(/^[A-Za-z0-9_-]{1,40}$/)",
+            "m": {
+              ".write": "auth != null && newData.exists()",
+              ".validate": "newData.child('d').isString() && newData.child('d').val().length < 60000",
+              "d": { ".validate": true }, "$other": { ".validate": false }
+            },
+            "sq": {
+              "$k": {
+                ".write": "auth != null && newData.exists()",
+                ".validate": "newData.child('d').isString() && newData.child('d').val().length < 20000",
+                "d": { ".validate": true }, "$other": { ".validate": false }
+              }
+            },
+            "mk": {
+              "$k": {
+                ".write": "auth != null && newData.exists()",
+                ".validate": "newData.child('d').isString() && newData.child('d').val().length < 4000",
+                "d": { ".validate": true }, "$other": { ".validate": false }
+              }
+            },
+            "r": {
+              "$fid": {
+                ".write": "auth != null && newData.exists() && (!data.exists() || data.child('d').val() === newData.child('d').val())",
+                ".validate": "newData.child('d').isString() && newData.child('d').val().length < 4000",
+                "d": { ".validate": true }, "$other": { ".validate": false }
+              }
+            },
+            "live": {
+              "$fid": {
+                ".write": "auth != null",
+                ".validate": "!newData.exists() || (newData.child('d').isString() && newData.child('d').val().length < 1000)",
+                "d": { ".validate": true }, "$other": { ".validate": false }
+              }
+            },
+            "tk": {
+              "$p": {
+                ".write": "auth != null && !data.exists() && newData.exists()",
+                ".validate": "newData.child('d').isString() && newData.child('d').val().length < 500",
+                "d": { ".validate": true }, "$other": { ".validate": false }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
