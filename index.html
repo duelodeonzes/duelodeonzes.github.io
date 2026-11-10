@@ -23,7 +23,7 @@
 window.addEventListener("beforeinstallprompt",function(e){e.preventDefault();window.__dp=e});
 if("serviceWorker" in navigator)window.addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){})});
 })();</script>
-<link rel="preload" as="script" href="db-882c4532bd.js"><link rel="preload" as="script" href="app-35e6184772.js">
+<link rel="preload" as="script" href="db-2fe692bbea.js"><link rel="preload" as="script" href="app-2765a90889.js">
 <title>Duelo de Onzes</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="fonts.css">
@@ -89,7 +89,7 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 .pl{display:grid;grid-template-columns:44px 1fr auto;align-items:center;gap:10px;background:var(--turf3);border:1px solid var(--lineC);border-radius:12px;padding:10px 12px;color:var(--chalk);font:inherit;text-align:left;cursor:pointer;min-width:0}
 .pl:active{transform:scale(.99)}
 .pos{font-family:var(--cond);font-weight:700;font-size:.85rem;text-align:center;border-radius:6px;padding:3px 0;background:var(--lineC)}
-.pos.GR{background:#7a5c12}.pos.DEF{background:#1f4f7a}.pos.MED{background:#2c6a3c}.pos.AVA{background:#7a2626}
+.pos.dual{font-size:.72rem;letter-spacing:-.02em}.pos.GR{background:#7a5c12}.pos.DEF{background:#1f4f7a}.pos.MED{background:#2c6a3c}.pos.AVA{background:#7a2626}
 .pl .nm{font-weight:700;overflow-wrap:anywhere;min-width:0}
 .pl .nm small{display:block;font-weight:400;color:var(--muted);font-size:.85rem}
 .rt{font-family:var(--display);font-weight:900;font-size:1.3rem;color:var(--gold);font-variant-numeric:tabular-nums}
@@ -593,7 +593,7 @@ input[type=text],input[type=search]{background:var(--card);border-color:var(--li
       <button class="big lgc" id="cardLiga" type="button"><span class="ic"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 20h18M5 20V9l7-5 7 5v11"/><path d="M9 20v-6h6v6"/></svg></span><span><b>Liga</b><small id="cardLigaTx">Épocas com draft e mercado</small></span></button>
     </div>
     <div class="mini2"><button type="button" id="goMe">Perfil e definições</button><span>·</span><button type="button" data-sheet="shHow">Como jogar</button><span>·</span><button type="button" id="langBtn" data-noi18n>🌐 English</button></div>
-    <p class="ver" id="verTag">versão 10/11 · 02h00</p><p class="ver">Dados: Wikidata e Wikipédia (CC BY-SA)</p><p class="ver"><a href="privacidade.html" style="color:inherit">Privacidade</a> · <a href="termos.html" style="color:inherit">Termos</a></p>
+    <p class="ver" id="verTag">versão 10/11 · 17h30</p><p class="ver">Dados: Wikidata e Wikipédia (CC BY-SA)</p><p class="ver"><a href="privacidade.html" style="color:inherit">Privacidade</a> · <a href="termos.html" style="color:inherit">Termos</a></p>
     <div hidden><button id="goStart"></button><button id="botBtn"></button><button id="onlineBtn"></button><button id="tourBtn"></button><button id="lgBtn"></button><button id="histBtn"></button><button id="hiAv"></button><span id="hiName"></span></div>
   </div>
   <div class="screen" id="sWelcome" hidden>
@@ -907,7 +907,7 @@ input[type=text],input[type=search]{background:var(--card);border-color:var(--li
 
 <canvas id="fx" hidden style="position:fixed;inset:0;pointer-events:none;z-index:50;width:100%;height:100%"></canvas>
 
-<script src="db-882c4532bd.js"></script>
-<script src="app-35e6184772.js"></script>
+<script src="db-2fe692bbea.js"></script>
+<script src="app-2765a90889.js"></script>
 
 </html>
