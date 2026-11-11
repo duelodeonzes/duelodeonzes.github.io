@@ -23,7 +23,7 @@
 window.addEventListener("beforeinstallprompt",function(e){e.preventDefault();window.__dp=e});
 if("serviceWorker" in navigator)window.addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){})});
 })();</script>
-<link rel="preload" as="script" href="db-3093c28578.js"><link rel="preload" as="script" href="app-9f2b5b47a0.js">
+<link rel="preload" as="script" href="db-3093c28578.js"><link rel="preload" as="script" href="app-c5fdf80d79.js">
 <title>Duelo de Onzes</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="fonts.css">
@@ -349,6 +349,15 @@ html,body{overflow-x:hidden}.app{overflow-x:clip}
 @keyframes tmp{50%{transform:scale(1.08)}}
 @media (prefers-reduced-motion:reduce){#tmPill.low{animation:none}}
 #netPill{position:fixed;top:max(8px,env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);z-index:60;background:#3a2a05;color:var(--gold);border:1px solid var(--gold);border-radius:999px;padding:6px 14px;font:700 .85rem var(--cond);letter-spacing:.04em;box-shadow:0 6px 18px rgba(0,0,0,.4)}
+#chatBtn{position:fixed;right:max(12px,env(safe-area-inset-right,0px));bottom:calc(150px + env(safe-area-inset-bottom,0px));z-index:34;width:50px;height:50px;border-radius:50%;border:2px solid var(--gold);background:#06120c;color:var(--chalk);font-size:1.35rem;cursor:pointer;box-shadow:0 8px 22px rgba(0,0,0,.5)}
+#chatBtn .cb{position:absolute;top:-6px;right:-6px;min-width:20px;height:20px;border-radius:999px;background:#ff5d4f;color:#fff;font:800 .75rem var(--body);display:grid;place-items:center;padding:0 5px;box-sizing:border-box}
+#chatToast{position:fixed;right:max(12px,env(safe-area-inset-right,0px));bottom:calc(208px + env(safe-area-inset-bottom,0px));z-index:34;max-width:min(300px,calc(100% - 32px));background:#06120c;border:1px solid var(--gold);border-radius:14px 14px 4px 14px;padding:8px 12px;font-size:.92rem;line-height:1.3;cursor:pointer;box-shadow:0 8px 22px rgba(0,0,0,.5);overflow-wrap:anywhere}
+#chatToast b{color:var(--gold)}
+.chatList{display:flex;flex-direction:column;gap:6px;min-height:180px;max-height:52dvh;overflow-y:auto;padding:2px}
+.cm{align-self:flex-start;max-width:82%;background:var(--turf3);border-radius:14px 14px 14px 4px;padding:7px 11px;line-height:1.35;overflow-wrap:anywhere}
+.cm.me{align-self:flex-end;background:#3a2f0b;border-radius:14px 14px 4px 14px}
+.cm small{display:block;font:700 .75rem var(--cond);letter-spacing:.04em;color:var(--c,var(--muted))}
+.chatRow{display:flex;gap:8px}.chatRow input{flex:1;min-width:0}.chatRow .btn{width:auto;padding:0 16px;font-size:1rem}
 .flagbtn{flex:none;background:transparent;border:1px solid var(--lineC);color:var(--muted);border-radius:999px;padding:3px 10px;font:700 .78rem var(--cond);letter-spacing:.06em;cursor:pointer}
 .repRow{display:flex;align-items:center;gap:10px;justify-content:space-between;border:1px solid var(--lineC);border-radius:12px;padding:8px 10px}
 .repRow .t{min-width:0;font-size:.92rem;line-height:1.3}.repRow .t small{display:block;color:var(--muted)}
@@ -593,7 +602,7 @@ input[type=text],input[type=search]{background:var(--card);border-color:var(--li
       <button class="big lgc" id="cardLiga" type="button"><span class="ic"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 20h18M5 20V9l7-5 7 5v11"/><path d="M9 20v-6h6v6"/></svg></span><span><b>Liga</b><small id="cardLigaTx">Épocas com draft e mercado</small></span></button>
     </div>
     <div class="mini2"><button type="button" id="goMe">Perfil e definições</button><span>·</span><button type="button" data-sheet="shHow">Como jogar</button><span>·</span><button type="button" id="langBtn" data-noi18n>🌐 English</button></div>
-    <p class="ver" id="verTag">versão 11/11 · 01h00b</p><p class="ver">Dados: Wikidata e Wikipédia (CC BY-SA)</p><p class="ver"><a href="privacidade.html" style="color:inherit">Privacidade</a> · <a href="termos.html" style="color:inherit">Termos</a></p>
+    <p class="ver" id="verTag">versão 11/11 · 01h30</p><p class="ver">Dados: Wikidata e Wikipédia (CC BY-SA)</p><p class="ver"><a href="privacidade.html" style="color:inherit">Privacidade</a> · <a href="termos.html" style="color:inherit">Termos</a></p>
     <div hidden><button id="goStart"></button><button id="botBtn"></button><button id="onlineBtn"></button><button id="tourBtn"></button><button id="lgBtn"></button><button id="histBtn"></button><button id="hiAv"></button><span id="hiName"></span></div>
   </div>
   <div class="screen" id="sWelcome" hidden>
@@ -851,6 +860,13 @@ input[type=text],input[type=search]{background:var(--card);border-color:var(--li
     <label class="toggle" for="showR"><span>Mostrar a qualidade dos jogadores durante a escolha</span><input type="checkbox" id="showR"></label>
     <div class="panel" id="repLocal" hidden style="display:flex;flex-direction:column;gap:8px"><span class="lbl">Erros reportados neste telemóvel</span><span class="muted" id="repLocalN"></span><button class="btn ghost" id="repCopy">Copiar para enviar ao Diogo</button><span class="msg ok" id="repCopyMsg"></span></div>
   </div></div>
+  <button id="chatBtn" type="button" hidden aria-label="Conversa">💬</button>
+  <div id="chatToast" hidden role="status"></div>
+  <div class="sheet" id="shChat" hidden><div class="sheetIn">
+    <div class="shHead"><h2>Conversa</h2><button class="xbtn" data-close aria-label="Fechar">✕</button></div>
+    <div class="chatList" id="chatList"></div>
+    <form class="chatRow" id="chatForm" autocomplete="off"><input type="text" id="chatIn" maxlength="200" placeholder="Escreve uma mensagem…" aria-label="Mensagem"><button class="btn" type="submit">Enviar</button></form>
+  </div></div>
   <div class="sheet" id="shInstall" hidden><div class="sheetIn">
     <div class="shHead"><h2 id="instTitle" data-noi18n>Pôr no ecrã principal</h2><button class="xbtn" data-close aria-label="Fechar">✕</button></div>
     <div id="instBody" data-noi18n></div>
@@ -909,6 +925,6 @@ input[type=text],input[type=search]{background:var(--card);border-color:var(--li
 <canvas id="fx" hidden style="position:fixed;inset:0;pointer-events:none;z-index:50;width:100%;height:100%"></canvas>
 
 <script src="db-3093c28578.js"></script>
-<script src="app-9f2b5b47a0.js"></script>
+<script src="app-c5fdf80d79.js"></script>
 
 </html>
