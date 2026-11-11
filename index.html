@@ -23,7 +23,7 @@
 window.addEventListener("beforeinstallprompt",function(e){e.preventDefault();window.__dp=e});
 if("serviceWorker" in navigator)window.addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){})});
 })();</script>
-<link rel="preload" as="script" href="db-3093c28578.js"><link rel="preload" as="script" href="app-c5fdf80d79.js">
+<link rel="preload" as="script" href="db-3093c28578.js"><link rel="preload" as="script" href="app-cb425c635e.js">
 <title>Duelo de Onzes</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="fonts.css">
@@ -521,6 +521,9 @@ html.lockmatch,html.lockmatch body{overflow:hidden;overscroll-behavior:none;heig
 .logo2{font:900 clamp(2.9rem,14vw,3.7rem)/.88 var(--display);text-transform:uppercase;margin-top:12px;letter-spacing:.01em}.logo2 em{color:var(--gold);font-style:normal;display:block}
 .grid4{display:grid;grid-template-columns:1fr 1fr;grid-auto-rows:1fr;gap:12px;flex:1 1 auto;min-height:300px;max-height:540px}
 .grid4 .big{position:relative;z-index:1;border-radius:24px;padding:18px;min-height:140px;display:flex;flex-direction:column;justify-content:space-between;align-items:flex-start;text-align:left;background:var(--card);border:1px solid var(--lineC);color:var(--chalk);cursor:pointer;font-family:var(--body)}
+/* a liga foi retirada (11/11): o código fica, mas sem entrada no jogo */
+#cardLiga,.lgPick{display:none!important}
+.instLink{align-self:center;background:none;border:1px solid rgba(255,209,102,.45);color:var(--gold);border-radius:999px;padding:8px 16px;font:700 .95rem var(--body);cursor:pointer}#cardTour{grid-column:1/-1}
 .grid4 .big.hi{background:linear-gradient(150deg,#d6ff6a,#9fe41f);color:var(--onGold);border:0}.grid4 .big.lgc{background:linear-gradient(135deg,#1e3a2a,#141922 60%,#1b2740)}
 .grid4 .big .ic{width:46px;height:46px;border-radius:15px;background:var(--turf3);color:var(--gold);display:grid;place-items:center}.grid4 .big.hi .ic{background:rgba(0,0,0,.12);color:var(--onGold)}
 .grid4 .big b{display:block;font:800 1.25rem var(--body);letter-spacing:-.01em}.grid4 .big small{display:block;font:500 .8rem var(--body);opacity:.72;margin-top:2px}.grid4 .big:active{transform:scale(.98)}
@@ -602,16 +605,17 @@ input[type=text],input[type=search]{background:var(--card);border-color:var(--li
       <button class="big lgc" id="cardLiga" type="button"><span class="ic"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 20h18M5 20V9l7-5 7 5v11"/><path d="M9 20v-6h6v6"/></svg></span><span><b>Liga</b><small id="cardLigaTx">Épocas com draft e mercado</small></span></button>
     </div>
     <div class="mini2"><button type="button" id="goMe">Perfil e definições</button><span>·</span><button type="button" data-sheet="shHow">Como jogar</button><span>·</span><button type="button" id="langBtn" data-noi18n>🌐 English</button></div>
-    <p class="ver" id="verTag">versão 11/11 · 01h30</p><p class="ver">Dados: Wikidata e Wikipédia (CC BY-SA)</p><p class="ver"><a href="privacidade.html" style="color:inherit">Privacidade</a> · <a href="termos.html" style="color:inherit">Termos</a></p>
+    <button type="button" class="instLink" id="goInst" hidden>📲 Como instalar a app</button>
+    <p class="ver" id="verTag">versão 11/11 · 12h00</p><p class="ver">Dados: Wikidata e Wikipédia (CC BY-SA)</p><p class="ver"><a href="privacidade.html" style="color:inherit">Privacidade</a> · <a href="termos.html" style="color:inherit">Termos</a></p>
     <div hidden><button id="goStart"></button><button id="botBtn"></button><button id="onlineBtn"></button><button id="tourBtn"></button><button id="lgBtn"></button><button id="histBtn"></button><button id="hiAv"></button><span id="hiName"></span></div>
   </div>
   <div class="screen" id="sWelcome" hidden>
     <div class="hero2" style="padding-top:30px"><span class="kick2">Bem-vindo</span><div class="logo2">Duelo de<em>Onzes</em></div></div>
-    <label class="field" for="wName"><span class="lbl">Como te chamas? É o nome que os amigos vão ver (e o da liga).</span><input type="text" id="wName" maxlength="16" autocomplete="off" placeholder="O teu nome"></label>
+    <label class="field" for="wName"><span class="lbl">Como te chamas? É o nome que os amigos vão ver.</span><input type="text" id="wName" maxlength="16" autocomplete="off" placeholder="O teu nome"></label>
     <div class="wTips">
       <div class="wTip"><span class="n">1</span><div><b>Monta o teu onze</b><small>Em cada ronda há uma regra nova ("Jogou no Benfica", "Campeão do Mundo"…). Escreve um jogador que a cumpra.</small></div></div>
       <div class="wTip"><span class="n">2</span><div><b>Os golos decides tu</b><small>Nos lances de perigo, quem ataca e quem defende escolhem às escondidas. Se o defesa não adivinhar, é golo.</small></div></div>
-      <div class="wTip"><span class="n">3</span><div><b>Joga com os amigos</b><small>No mesmo telemóvel, online, em torneios ou numa liga com épocas, draft e mercado.</small></div></div>
+      <div class="wTip"><span class="n">3</span><div><b>Joga com os amigos</b><small>No mesmo telemóvel, online ou em torneios.</small></div></div>
     </div>
     <span class="msg bad" id="wMsg"></span>
     <div class="grow"></div>
@@ -635,7 +639,7 @@ input[type=text],input[type=search]{background:var(--card);border-color:var(--li
   <div class="screen" id="sMe" hidden>
     <div class="hiTop"><button class="topBack" type="button" data-home aria-label="Voltar"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button><h1>O meu perfil</h1></div>
     <div class="panel" style="display:flex;align-items:center;gap:14px"><span class="avBig" id="meAv">?</span>
-      <label class="field" for="meName" style="flex:1"><span class="lbl">O teu nome (igual em todos os jogos e na liga)</span><input type="text" id="meName" maxlength="16" autocomplete="off"></label></div>
+      <label class="field" for="meName" style="flex:1"><span class="lbl">O teu nome (igual em todos os jogos)</span><input type="text" id="meName" maxlength="16" autocomplete="off"></label></div>
     <span class="lbl">Definições</span><div id="meOpts" class="meOpts"></div>
     <div class="list">
       <button class="li" type="button" id="meHist"><span>📜 Histórico de jogos</span><span class="v"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg></span></button>
@@ -925,6 +929,6 @@ input[type=text],input[type=search]{background:var(--card);border-color:var(--li
 <canvas id="fx" hidden style="position:fixed;inset:0;pointer-events:none;z-index:50;width:100%;height:100%"></canvas>
 
 <script src="db-3093c28578.js"></script>
-<script src="app-c5fdf80d79.js"></script>
+<script src="app-cb425c635e.js"></script>
 
 </html>
