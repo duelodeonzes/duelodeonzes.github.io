@@ -2492,7 +2492,8 @@ function reachStop(){
   SC.skip=!!LIVE.auto||LIVE.si<(LIVE.ffTo||0);
   const stop=LIVE.plan[LIVE.si];
   if(stop.kind==="none"){const g=LIVE.st.goals;
-    if(stop.lg&&Math.abs(g[0]-g[1])===1&&!LIVE.st.lgDone){LIVE.st.lgDone=1;const t=g[0]<g[1]?0:1;
+    /* último suspiro: só às vezes (cerca de 3 em 10), senão haveria empates e penáltis a mais */
+    if(stop.lg&&Math.abs(g[0]-g[1])===1&&!LIVE.st.lgDone&&hash(strHash(LIVE.key+":lgp"))<.3){LIVE.st.lgDone=1;const t=g[0]<g[1]?0:1;
       LIVE.plan[LIVE.si]={...withRng(seeded(LIVE.key+":lg"),()=>buildMom(LIVE.st,89,t,wpick(MOMTW))),lg:1};
       addLine({m:89,info:true,tx:`⏱ Último suspiro! ${LIVE.st.N[t]} tem uma última oportunidade para empatar.`});return reachStop()}
     LIVE.waiting=null;LIVE.si++;proceed();return}
