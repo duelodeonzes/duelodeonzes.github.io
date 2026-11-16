@@ -2684,7 +2684,8 @@ function resolveStop2(k){
       else{kind="goal";tx=kind==="goal"?`GOLO! ${hd.n} cabeceia sozinho ao ${a==="P"?"primeiro":"segundo"} poste.`:kind==="save"?`Cabeceamento de ${hd.n}, grande defesa de ${stop.gk.n}!`:`${hd.n} cabeceia por cima.`}}
     const out={goal:kind==="goal",kind,tx,sc,as};
     /* VAR: de vez em quando um golo vai ao vídeo (igual nos dois telemóveis) */
-    if(out.goal&&!stop.so&&stop.type!=="pen"&&hash(strHash(LIVE.key+":var"+k))<.12){
+    /* só na simulação, e só em lances de bola corrida (num livre ou num canto não faz sentido haver fora de jogo) */
+    if(out.goal&&LIVE.sim&&!stop.so&&["uu","ca","hd","bx"].includes(stop.type)&&hash(strHash(LIVE.key+":var"+k))<.12){
       if(hash(strHash(LIVE.key+":var2"+k))<.45){out.goal=false;out.kind="var";out.tx=tx+" 🖥️ Mas o VAR chama o árbitro… golo anulado por fora de jogo!"}
       else out.tx=tx+" 🖥️ O VAR revê o lance… e confirma o golo!"}
     return out;
