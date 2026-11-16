@@ -2831,11 +2831,17 @@ setTimeout(()=>{try{if(!STAT_ON)return;const now=new Date(),d=now.toISOString().
   const t=new Date(Date.UTC(now.getUTCFullYear(),now.getUTCMonth(),now.getUTCDate()));const dn=(t.getUTCDay()+6)%7;t.setUTCDate(t.getUTCDate()-dn);const wk=t.toISOString().slice(0,10);
   if(store("duelo_statwk")!==wk){store("duelo_statwk",wk);statAdd("v_wk")}
   const mo=d.slice(0,7);if(store("duelo_statmo")!==mo){store("duelo_statmo",mo);statAdd("v_mo")}}catch(e){}},4000);
+/* registo de jogos (só o Diogo lê): nomes dos treinadores, modo e resultado; um código aleatório por telemóvel para contar pessoas diferentes */
+function devId(){let d=store("duelo_dev");if(!d){d=Math.random().toString(36).slice(2,10);store("duelo_dev",d)}return d}
+function logPlay(o){if(!STAT_ON)return;try{const day=new Date().toISOString().slice(0,10),d=JSON.stringify({...o,dv:devId(),lg:LANG}).slice(0,1500);
+  fbLoad().then(({D,db})=>D.push(D.ref(db,"plays/"+day),{d,t:D.serverTimestamp()})).catch(()=>{})}catch(e){}}
 function statGame(){try{
   if(!G||(G.online&&G.online.watch))return;
   if(G.mode==="online"&&G.me!==0)return;   /* online conta uma vez por jogo (quem criou a sala) */
   const k=G.fixed?"g_s":G.mode==="tour"||(G.mode==="online"&&G.n>2)?"g_t":G.mode==="online"?"g_o":Object.keys(G.bots||{}).length?"g_b":"g_l";
-  statAdd(k);if(LIVE&&LIVE.sim)statAdd("g_sim")}catch(e){}}
+  statAdd(k);if(LIVE&&LIVE.sim)statAdd("g_sim");
+  const st=LIVE&&LIVE.st,N=st?st.N:[];logPlay({m:k.slice(2),n:(G.names||[]).filter(x=>!/^Bot /.test(x)),bots:Object.keys(G.bots||{}).length,
+    r:st?`${N[0]} ${st.goals[0]}-${st.goals[1]} ${N[1]}`+(LIVE.pk?` (pen ${LIVE.pk.g.join("-")})`:""):"",code:G.online?G.online.code:null,th:G.theme||null})}catch(e){}}
 function finish(){
   stopFeed();LIVE.done=true;$("skip").hidden=true;$("momBox").hidden=true;$("toResult").hidden=!!(G&&G.online&&G.online.watch);if(!LIVE.st.pens)$("clock").textContent="Final";
   whistle(3);
@@ -3452,7 +3458,8 @@ function dlyGuess(){const day=dlyToday(),n=dlyNum(day),M=dlyMystery(day),S=dlyGe
   const msg=el("p","msg");
   if(!S.done){const inp=el("input");inp.type="search";inp.placeholder=LE(`Escreve um jogador (tentativa ${S.tries.length+1} de 6)`,`Type a player (try ${S.tries.length+1} of 6)`);inp.autocomplete="off";
     const sug=el("div","list");box.append(inp,sug,msg);
-    const pick=p=>{S.tries.push(p.n);if(p.n===M.n){S.done=true;S.win=true;statAdd("g_dg")}else if(S.tries.length>=6){S.done=true;S.win=false;statAdd("g_dg")}dlySet(day,"g",S);dlyGuess()};
+    const pick=p=>{S.tries.push(p.n);if(p.n===M.n){S.done=true;S.win=true;statAdd("g_dg")}else if(S.tries.length>=6){S.done=true;S.win=false;statAdd("g_dg")}
+      if(S.done)logPlay({m:"dg",n:[myName()],r:(S.win?S.tries.length:"X")+"/6",num:dlyNum(day)});dlySet(day,"g",S);dlyGuess()};
     inp.oninput=()=>dlySug(inp.value,sug,pick,new Set(S.tries));setTimeout(()=>inp.focus(),80)}
   else{const res=el("div","panel dlyRes");res.append(el("span","lbl",S.win?LE("Acertaste! 🎉","You got it! 🎉"):LE("Era…","It was…")),el("b","dlyBig",dn(M.n)),el("span","muted",`${M.c} · ${M.cl.slice(0,6).join(", ")}${M.cl.length>6?"…":""}`));box.append(res);
     const sq=S.tries.map(t=>t===M.n?"🟩":"🟥").join("")+"⬜".repeat(Math.max(0,6-S.tries.length));
@@ -3477,7 +3484,7 @@ function dlyRapid(){clearInterval(DLYT);const day=dlyToday(),n=dlyNum(day),R=dly
     inp.oninput=()=>dlySug(inp.value,sug,pick,new Set(S.list));
     inp.onkeydown=e=>{if(e.key==="Enter"){const f=sug.querySelector("button");if(f)f.click()}};
     const tick=()=>{const left=Math.max(0,60-(Date.now()-S.start)/1000);clock.textContent=`⏱ ${Math.ceil(left)} s`;clock.classList.toggle("low",left<10);
-      if(left<=0){clearInterval(DLYT);S.done=true;dlySet(day,"r",S);statAdd("g_dr");dlyRapid()}};tick();DLYT=setInterval(tick,200);setTimeout(()=>inp.focus(),80)}
+      if(left<=0){clearInterval(DLYT);S.done=true;dlySet(day,"r",S);statAdd("g_dr");logPlay({m:"dr",n:[myName()],r:S.list.length,rule:R.l,num:dlyNum(day)});dlyRapid()}};tick();DLYT=setInterval(tick,200);setTimeout(()=>inp.focus(),80)}
   else{clock.textContent=LE("Acabou!","Time's up!");box.append(got);
     const res=el("div","panel dlyRes");res.append(el("span","lbl",LE("Resultado","Result")),el("b","dlyBig",LE(`${S.list.length} jogadores`,`${S.list.length} players`)));
     const miss=DB.filter(p=>!p.youth&&R.t(p)&&!S.list.includes(p.n)).sort((a,b)=>b.r-a.r).slice(0,6).map(p=>dn(p.n));
