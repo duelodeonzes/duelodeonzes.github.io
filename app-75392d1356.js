@@ -950,7 +950,7 @@ const FBV="13.1.0",FB_TTL=2*864e5;
 const APPCHECK_KEY="6Ldl5xMuAAAAAEPrlKy2St3ovDWFfj-rbRJyj6Xb";
 let FB=null;
 /* versão do protocolo online: telemóveis com versões diferentes avisam para recarregar */
-const APPV="2026-11-22a";
+const APPV="2026-11-22b";
 /* decisões às escondidas: cada telemóvel publica primeiro um compromisso (hash) e só revela depois de ver o do outro */
 function cyrb(s){let h1=0xdeadbeef,h2=0x41c6ce57;for(let i=0;i<s.length;i++){const c=s.charCodeAt(i);h1=Math.imul(h1^c,2654435761);h2=Math.imul(h2^c,1597334677)}
   h1=Math.imul(h1^(h1>>>16),2246822507)^Math.imul(h2^(h2>>>13),3266489909);h2=Math.imul(h2^(h2>>>16),2246822507)^Math.imul(h1^(h1>>>13),3266489909);return(4294967296*(2097151&h2)+(h1>>>0)).toString(36)}
